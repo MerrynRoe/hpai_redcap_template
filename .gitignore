@@ -1,0 +1,30 @@
+# Session Data files
+.RData
+.RDataTmp
+.Rhistory
+
+#User-specific files
+.Ruserdata
+
+# RStuidio files
+.Rproj.user/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# Ignore html and word filetypes e.g rendered notebook or Rmd outputs
+*.nb.htm
+*.html
+*.rmarkdown
+*.docx
+
+# R Environment Variables
+.Renviron
+
+# Any APIs
+api_tokens.R
+
+# Ignore project-specific folders
+outputs/
+raw_data/
