@@ -50,7 +50,8 @@ contact_dat <- redcap %>%
   filter(sms_consent == 1)
 
 # REDCap unique survey link
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2025-11-19_1242.csv")) # Update with most recent version
+# Download from survey distribution tools, ensure it is the correct survey and you add '_fu_link' to doc name to avoid confusion
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2025-11-19_1242_fu_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%

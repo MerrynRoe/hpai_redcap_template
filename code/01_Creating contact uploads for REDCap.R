@@ -11,7 +11,7 @@ pacman::p_load(
 )
 
 # Import caselist - ensure most upto date version
-dat_contacts_facility_a <- read.csv(here::here("raw_data", "20251114_facilty_a_contact_list.csv"))
+dat_contacts_facility_a <- read.csv(here::here("raw_data", "20251114_facilty_a_contact_list - v2.csv"))
 
 # Import REDCap case list
 source(here::here("code", "api_tokens.R"))
@@ -36,9 +36,12 @@ formData <- list("token"=token,
 response <- httr::POST(url, body = formData, encode = "form")
 redcap <- httr::content(response)
 
+redcap <- redcap %>%
+  select(record_id, first_name, phone, exposure_a_yn, exposure_b_yn)
+
 max_id <- max(redcap$record_id, na.rm = TRUE) # We will need this to add record_id numbers
 
-# Match on key feilds, ie first name and mobile number
+# Match on key fields, ie first name and mobile number
 
 dat_contacts_facility_a <- dat_contacts_facility_a %>%
   mutate(contact_list_flag_a = 1) %>% # Create contact list flag, ensure variable is updated per facility
@@ -61,23 +64,23 @@ redcap <- redcap %>%
   ) %>%
   mutate(first_name_clean = str_to_lower(first_name)) 
 
-redcap_id_key <- redcap %>%
-  select(record_id, first_name_clean, phone_clean)
-
 dat_contacts_facility_a <- dat_contacts_facility_a %>%
-  left_join(redcap_id_key,
+  left_join(redcap,
             by = c("first_name_clean", "phone_clean")) 
 
-redcap_filled <- dat_contacts_facility_a %>%
-  arrange(-is.na(record_id), record_id) %>%
-  mutate(
+# Only upload new cases
+dat_contacts_facility_a_new <- dat_contacts_facility_a %>%
+  filter(is.na(record_id))
+
+dat_contacts_facility_a_new <- dat_contacts_facility_a_new %>%
+   mutate(
     record_id = if_else(
       is.na(record_id),
       max_id + row_number(),   # sequential values
       record_id
     )
   ) %>%
-  select(-phone, -first_name) %>%
+  select(-phone.x, -first_name.x, -phone.y, -first_name.y) %>%
   rename(phone = phone_clean,
          first_name = first_name_clean) %>%
   mutate(first_name = str_to_title(first_name)) %>%   # Capitalise first letter
@@ -87,7 +90,7 @@ redcap_filled <- dat_contacts_facility_a %>%
 timestamp <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
 
 write.csv(
-  redcap_filled,
-  here::here("outputs", paste0(timestamp, "_import_to_redcap.csv")),
+  dat_contacts_facility_a_new,
+  here::here("outputs", paste0(timestamp, "_import_to_redcap_for_triage.csv")),
   row.names = FALSE
 )
