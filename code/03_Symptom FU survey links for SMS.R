@@ -37,14 +37,42 @@ formData <- list("token"=token,
 response <- httr::POST(url, body = formData, encode = "form")
 redcap <- httr::content(response)
 
+# Clean all date variables
+date_vars <- redcap %>%
+  select(contains("date")) %>%
+  names()
+
+redcap <- redcap %>%
+  mutate(across(all_of(date_vars), as.Date))
+
+# Calculate date_last_exposure for each ip
+redcap <- redcap %>%
+  rowwise() %>%
+  mutate(
+    last_exposure_date_ip1 = {
+      vals <- c_across(contains("date_ip1"))
+      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
+    },
+    last_exposure_date_ip2 = {
+      vals <- c_across(contains("date_ip2"))
+      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
+    }
+  ) %>%
+  ungroup()
+
+redcap %>%
+  select(contains("date_ip1")) %>%
+  view()
+
+# Cleaning further
 contact_dat <- redcap %>%
   select(
     record_id,
     sms_consent,
     phone,
     first_name, 
-    date_last_exposure_a, 
-    date_last_exposure_b
+    date_last_exposure_ip1,
+    date_last_exposure_ip2
     # re-exposed self-report? create new date variable?
   ) %>%
   filter(sms_consent == 1)

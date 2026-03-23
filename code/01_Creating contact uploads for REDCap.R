@@ -11,7 +11,7 @@ pacman::p_load(
 )
 
 # Import caselist - ensure most upto date version
-dat_contacts_facility_a <- read.csv(here::here("raw_data", "20251114_facilty_a_contact_list - v2.csv"))
+dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "20260324_facilty_ip1_contact_list.csv"))
 
 # Import REDCap case list
 source(here::here("code", "api_tokens.R"))
@@ -37,14 +37,14 @@ response <- httr::POST(url, body = formData, encode = "form")
 redcap <- httr::content(response)
 
 redcap <- redcap %>%
-  select(record_id, first_name, phone, exposure_a_yn, exposure_b_yn)
+  select(record_id, first_name, phone, exposure_ip1_yn, exposure_ip1_yn)
 
 max_id <- max(redcap$record_id, na.rm = TRUE) # We will need this to add record_id numbers
 
 # Match on key fields, ie first name and mobile number
 
-dat_contacts_facility_a <- dat_contacts_facility_a %>%
-  mutate(contact_list_flag_a = 1) %>% # Create contact list flag, ensure variable is updated per facility
+dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
+  mutate(contact_list_flag_ip1 = 1) %>% ### Create contact list flag, ensure variable is updated per facility ###
   mutate(
     phone_clean = phone %>%
       str_remove_all("[^0-9]") %>%          # remove spaces, +, brackets, etc.
@@ -64,15 +64,15 @@ redcap <- redcap %>%
   ) %>%
   mutate(first_name_clean = str_to_lower(first_name)) 
 
-dat_contacts_facility_a <- dat_contacts_facility_a %>%
+dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
   left_join(redcap,
             by = c("first_name_clean", "phone_clean")) 
 
 # Only upload new cases
-dat_contacts_facility_a_new <- dat_contacts_facility_a %>%
+dat_contacts_facility_ip1_new <- dat_contacts_facility_ip1 %>%
   filter(is.na(record_id))
 
-dat_contacts_facility_a_new <- dat_contacts_facility_a_new %>%
+dat_contacts_facility_ip1_new <- dat_contacts_facility_ip1_new %>%
    mutate(
     record_id = if_else(
       is.na(record_id),
