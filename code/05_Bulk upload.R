@@ -24,4 +24,13 @@ bulk_upload <- redcap %>%
          LINKED_TO_AN_OUTBREAK_SPECIFY = "12345678910" ### Update to PHESS outbreak ID ###
   )
 
+## TODO
+# Filter out cases triaged out
+
+# Filter out already uploaded cases???? Check with DH - on Q list
+
+
+
 # Export for DH 
+
+write.csv(bulk_upload, file = here::here("outputs", paste0("phess_bulk_upload_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)

@@ -1,4 +1,4 @@
-# Importing facility contact lists and matching to exhisting REDCap IDs
+# Importing facility contact lists and matching to existing REDCap IDs
 
 # Load packages
 # Loading packagaes
