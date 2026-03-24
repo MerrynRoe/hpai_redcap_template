@@ -88,9 +88,9 @@ link_dat <- link_dat %>%
 
 # Merge data
 merged_data <- left_join(contact_dat, link_dat, by = "record_id") %>%
-  mutate(date_last_exposure_a = as.Date(date_last_exposure_a),
-         date_last_exposure_b = as.Date(date_last_exposure_b),
-         date_last_exposre_all =  pmax(date_last_exposure_a, date_last_exposure_b, na.rm = TRUE))
+  mutate(date_last_exposure_ip1 = as.Date(date_last_exposure_ip1),
+         date_last_exposure_ip2 = as.Date(date_last_exposure_ip2),
+         date_last_exposre_all =  pmax(date_last_exposure_ip1, date_last_exposure_ip2, na.rm = TRUE))
 
 # Filter to last high risk exposure in the last 10 days
 date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from today

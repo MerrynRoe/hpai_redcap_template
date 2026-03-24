@@ -45,7 +45,7 @@ contact_dat <- redcap %>%
     phone,
     first_name, 
     exposure_ip1_yn, 
-    exposure_ip1_yn
+    exposure_ip2_yn
     # re-exposed self-report? create new date variable?
   ) %>%
   filter(sms_consent != 0 | is.na(sms_consent)) %>%
@@ -68,7 +68,7 @@ merged_data <- left_join(contact_dat, link_dat, by = "record_id")
 # Final essendex list
 
 essendex <- merged_data %>%
-  #filter(is.na(exposure_ip1_yn) | is.na(exposure_ip2_yn)) %>%
+  #filter(is.na(exposure_ip1_yn) | is.na(exposure_ip2_yn)) %>% # Use this when second IP included
   filter(is.na(exposure_ip1_yn)) %>%
   select(first_name, phone, survey_link) %>%
   mutate(phone = paste0("+", phone)) # Format phone number for essendex
