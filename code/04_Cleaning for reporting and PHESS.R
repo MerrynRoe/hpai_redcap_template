@@ -38,7 +38,7 @@ redcap <- httr::content(response)
 
 # Clean all date variables
 date_vars <- redcap %>%
-  select(contains("date")) %>%
+  select(contains("date"), -email_updated) %>%
   names()
 
 redcap <- redcap %>%
@@ -316,6 +316,15 @@ dat_clean <- dat_clean %>%
 dat_clean %>%
   select(record_id,  exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
   view()
+
+# Add high level risk assessment
+dat_clean <- dat_clean %>%
+  mutate(exposure_risk_calculated_all = case_when(
+    exposure_risk_calculated_ip1 == "High Risk" | exposure_risk_calculated_ip2 == "High Risk" ~ "High Risk",
+    exposure_risk_calculated_ip1 == "Low Risk" | exposure_risk_calculated_ip2 == "Low Risk" ~ "Low Risk",
+    exposure_risk_calculated_ip1 == "Negligible Risk" | exposure_risk_calculated_ip2 == "Negligible Risk" ~ "Negligible Risk",
+    TRUE ~ NA_character_
+  ))
 
 ## To do
 # Confirmed cases
