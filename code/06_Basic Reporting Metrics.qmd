@@ -1,26 +1,151 @@
 ---
-title: "Basic Report"
-format: html
-editor: visual
+title: "Basic Example Report - HPAI"
+date-modified: today
+author: "GVPHU Epidemiology, Data and Analytics team"
+format: 
+  html:
+    code-fold: true
+    code-overflow: scroll
+    code-tools: true
+execute: 
+  echo: false
+  message: false
+  warning: false
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
 ```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
+#| label: setup
 #| echo: false
-2 * 2
+#| message: false
+#| warning: false
+
+pacman::p_load(tidyverse,
+               janitor,
+               here,
+               readxl,
+               rio,
+               showtext,
+               gt,
+               ggrepel,
+               gtsummary,
+               sf,
+               leaflet,
+               leaflet.extras)
+
+
+# Setting GV theme
+gv_colours <- list(
+  "dark_blue" = "#00416B",
+  "med_blue" = "#0E4C90",
+  "light_blue" = "#0075C9",
+  "purple" = "#9D57A3",
+  "black" = "#424143",
+  "grey" = "#EAEAEA",
+  "white" = "#FFFFFF",
+  "aqua" = "#00b0ab",
+  "aqua2" = "#89CCC8",
+  "dark_aqua" = "#008aab",
+  "dark_aqua2" = "#78B8C9",
+  "bright_orange" = "#e75300",
+  "dark_red"="#ac162c",
+  "dark_pink" = "#b52372",
+  "green" = "#84BD00",
+  "green2" = "#BED99A",
+  "orange" = "#FFA300",
+  "orange2" = "#FFC594",
+  "dark_purple" = "#470A68",
+  "light_purple" = "#A192B2",
+  "red" = "#b01c2e",
+  "red2" = "#CA9699",
+  "cool_grey" = "#646569",
+  "cool_grey2" = "#A8A8A9"
+)
+
+
+# basic theme elements ----------------------------------------------------
+
+theme_gv <- function() {
+  
+  theme_minimal() +
+    theme(text = element_text(family = "cabin"),
+          axis.title = element_blank(),
+          axis.text.x = element_text(face = "bold",
+                                     margin = margin(t = -5)),
+          legend.title = element_blank())
+}
+
+
+
+font_add_google("Cabin", "cabin")
+
+showtext_auto()
+
+theme_set(theme_gv())
+
+source(here::here("code", "04_Cleaning for reporting and PHESS.R"))
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+#| label: text_calc
+#| echo: false
+#| message: false
+#| warning: false
+
+# Number of IP sites
+n_ip_sites <- 1
+
+# Total (unique) contacts screened
+n_total_contacts_pre_triage <- nrow(redcap)
+
+# Total contacts triaged (completed)
+n_total_contacts_responded_triage <- dat_clean %>%
+  filter(!is.na(exposure_ip1_yn) | !is.na(exposure_ip2_yn)) %>%
+  nrow()
+
+# Total contacts triaged (attended)
+n_total_contacts_exposed <- dat_clean %>%
+  filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
+  nrow()
+
+pc_total_contacts_exposed <- (n_total_contacts_exposed/n_total_contacts_responded_triage * 100)
+
+# Total contacts interviewed (3 PHO led interview forms marked as 'complete')
+n_contacts_interviewed <- dat_clean %>%
+  filter(avian_influenza_case_demo_complete == 2 & 
+           (avian_influenza_case_facility_ip1_risk_complete == 2 | avian_influenza_case_facility_ip2_risk_complete == 2) &
+  avian_influenza_case_symptoms_treatment_complete == 2) %>%
+  nrow()
+
+pc_contacts_interviewed <- (n_contacts_interviewed/n_total_contacts_exposed * 100)
+
+
+# Total high risk contacts
+n_high_risk <- dat_clean %>%
+  filter(exposure_risk_calculated_all == "High Risk") %>%
+  nrow()
+
+# Total with any symptoms
+n_symptoms_any <- dat_clean %>%
+  filter(symptoms == 1 | symptoms_yn_fu == 1) %>%
+  nrow()
+
+# Total in high risk period
+# Filter to last high risk exposure in the last 10 days
+date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from today
+
+
+n_high_risk_period <- dat_clean %>%
+  filter(exposure_risk_calculated_all == "High Risk") %>%
+  filter(last_exposure_date_all >= date_10_days_ago) %>%
+  nrow()  
+```
+
+## Local Public health Unit
+
+* [n_ip_sites] HPAI infected premeses have been reported
+* After deduplication, a total of [n_total_contacts_pre_triage] contacts were provided by facilities for screening, to date [n_total_contacts_responded_triage] have been triaged with [n_total_contacts_exposed] ([pc_total_contacts_exposed]%) having reported attendance insite during the period of interest
+* [n_contacts_interviewed] ([pc_contacts_interviewed]%) of those who have reported onsite attendance during the period of interest have been interviewed
+* [n_high_risk] have been identified as high risk and [n_symptoms_any] have reported symptoms
+* [n_high_risk_period] high risk contacts are still in their high risk period requiring follow up
