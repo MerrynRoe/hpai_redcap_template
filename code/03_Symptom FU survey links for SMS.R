@@ -71,8 +71,8 @@ contact_dat <- redcap %>%
     sms_consent,
     phone,
     first_name, 
-    date_last_exposure_ip1,
-    date_last_exposure_ip2
+    last_exposure_date_ip1,
+    last_exposure_date_ip2
     # re-exposed self-report? create new date variable?
   ) %>%
   filter(sms_consent == 1)
