@@ -39,7 +39,7 @@ redcap <- httr::content(response)
 
 # Clean all date variables
 date_vars <- redcap %>%
-  select(contains("date")) %>%
+  select(contains("date"), - email_updated) %>%
   names()
 
 redcap <- redcap %>%
@@ -69,7 +69,7 @@ contact_dat <- redcap %>%
   select(
     record_id,
     sms_consent,
-    phone,
+    contact_number,
     first_name, 
     last_exposure_date_ip1,
     last_exposure_date_ip2
@@ -79,7 +79,7 @@ contact_dat <- redcap %>%
 
 # REDCap unique survey link
 # Download from survey distribution tools, ensure it is the correct survey and you add '_fu_link' to doc name to avoid confusion
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2025-11-19_1242_fu_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-03-25_1607_fu_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -88,16 +88,16 @@ link_dat <- link_dat %>%
 
 # Merge data
 merged_data <- left_join(contact_dat, link_dat, by = "record_id") %>%
-  mutate(date_last_exposure_ip1 = as.Date(date_last_exposure_ip1),
-         date_last_exposure_ip2 = as.Date(date_last_exposure_ip2),
-         date_last_exposre_all =  pmax(date_last_exposure_ip1, date_last_exposure_ip2, na.rm = TRUE))
+  mutate(last_exposure_date_ip1 = as.Date(last_exposure_date_ip1),
+         last_exposure_date_ip2 = as.Date(last_exposure_date_ip2),
+         last_exposure_date_all =  pmax(last_exposure_date_ip1, last_exposure_date_ip2, na.rm = TRUE))
 
 # Filter to last high risk exposure in the last 10 days
 date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from today
 
-essendex <- merged_data %>%
-  filter(date_last_exposre_all >= date_10_days_ago) %>%
-  select(first_name, phone, survey_link) %>%
-  mutate(phone = paste0("+", phone)) # Format phone number for essendex
+genesis <- merged_data %>%
+  filter(last_exposure_date_all >= date_10_days_ago) %>%
+  select(first_name, contact_number, survey_link) %>%
+  mutate(contact_number = paste0("+", contact_number)) # Format phone number for essendex
 
-write.csv(essendex, file = here::here("outputs", paste0("sms_list_sympt_fu_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
+write.csv(genesis, file = here::here("outputs", paste0("sms_list_sympt_fu_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
