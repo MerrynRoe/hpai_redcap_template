@@ -144,8 +144,59 @@ n_high_risk_period <- dat_clean %>%
 
 ## Local Public health Unit
 
-* [n_ip_sites] HPAI infected premeses have been reported
-* After deduplication, a total of [n_total_contacts_pre_triage] contacts were provided by facilities for screening, to date [n_total_contacts_responded_triage] have been triaged with [n_total_contacts_exposed] ([pc_total_contacts_exposed]%) having reported attendance insite during the period of interest
-* [n_contacts_interviewed] ([pc_contacts_interviewed]%) of those who have reported onsite attendance during the period of interest have been interviewed
-* [n_high_risk] have been identified as high risk and [n_symptoms_any] have reported symptoms
-* [n_high_risk_period] high risk contacts are still in their high risk period requiring follow up
+* `r n_ip_sites` HPAI infected premises have been reported  
+* After deduplication, a total of `r n_total_contacts_pre_triage` contacts were provided by facilities for screening; to date `r n_total_contacts_responded_triage` have been triaged, with `r n_total_contacts_exposed` (`r round(pc_total_contacts_exposed, 2)`%) having reported attendance onsite during the period of interest  
+* `r n_contacts_interviewed` (`r round(pc_contacts_interviewed, 2)`%) of those who have reported onsite attendance during the period of interest had their interview completed  
+* `r n_high_risk` have been identified as high risk and `r n_symptoms_any` have reported symptoms  
+* `r n_high_risk_period` high risk contacts are still in their high risk period requiring follow up
+
+```{r}
+#| label: summary_table
+#| echo: false
+#| message: false
+#| warning: false
+
+dat_ip <- dat_clean %>%
+  pivot_longer(
+    cols = c(exposure_ip1_yn, exposure_ip2_yn),
+    names_to = "ip_site",
+    values_to = "exposed"
+  ) %>%
+  filter(exposed == 1) %>%
+  mutate(
+    ip_site = recode(ip_site,
+                     exposure_ip1_yn = "IP1",
+                     exposure_ip2_yn = "IP2")
+  )
+
+summary_ip <- dat_ip %>%
+  group_by(ip_site) %>%
+  summarise(
+
+    # Total contacts
+    `Total Contacts` = n(),
+
+    # Suspected cases
+    `Suspected Cases` = sum(symptoms == 1 | symptoms_yn_fu == 1, na.rm = TRUE),
+
+    # Confirmed cases
+    `Total Cases (confirmed)` = sum(
+      (symptoms == 1 | symptoms_yn_fu == 1) &
+      test_results %in% c(2, 3),
+      na.rm = TRUE
+    ),
+
+    # High risk contacts
+    `High Risk Contacts` = sum(
+      exposure_risk_calculated_all == "High Risk",
+      na.rm = TRUE
+    ),
+
+    # Final contact at risk date
+    `Final contact at risk date` = max(last_exposure_date_all, na.rm = TRUE)
+
+  ) %>%
+  ungroup()
+
+summary_ip
+```

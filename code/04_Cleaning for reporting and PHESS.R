@@ -326,6 +326,23 @@ dat_clean <- dat_clean %>%
     TRUE ~ NA_character_
   ))
 
+# Last exposure date
+dat_clean <- dat_clean %>%
+  mutate(
+    last_exposure_date_ip1 = {
+      vals <- c_across(contains("date_ip1"))
+      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
+    },
+    last_exposure_date_ip2 = {
+      vals <- c_across(contains("date_ip2"))
+      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
+    }
+  ) %>%
+  ungroup() %>%
+  mutate(last_exposure_date_ip1 = as.Date(last_exposure_date_ip1),
+         last_exposure_date_ip2 = as.Date(last_exposure_date_ip2),
+         last_exposure_date_all =  pmax(last_exposure_date_ip1, last_exposure_date_ip2, na.rm = TRUE))
+
 ## To do
 # Confirmed cases
 # exposure_ip1_yn exposure_ip2_yn == 1

@@ -28,3 +28,15 @@ api_tokens.R
 # Ignore project-specific folders
 outputs/
 raw_data/
+code/06_Basic Reporting Metrics_files/libs/bootstrap/bootstrap-bb462d781dde1847d9e3ccf7736099dd.min.css
+code/06_Basic Reporting Metrics_files/libs/bootstrap/bootstrap-icons.css
+code/06_Basic Reporting Metrics_files/libs/bootstrap/bootstrap-icons.woff
+code/06_Basic Reporting Metrics_files/libs/bootstrap/bootstrap.min.js
+code/06_Basic Reporting Metrics_files/libs/clipboard/clipboard.min.js
+code/06_Basic Reporting Metrics_files/libs/quarto-html/anchor.min.js
+code/06_Basic Reporting Metrics_files/libs/quarto-html/popper.min.js
+code/06_Basic Reporting Metrics_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css
+code/06_Basic Reporting Metrics_files/libs/quarto-html/quarto.js
+code/06_Basic Reporting Metrics_files/libs/quarto-html/tabsets/tabsets.js
+code/06_Basic Reporting Metrics_files/libs/quarto-html/tippy.css
+code/06_Basic Reporting Metrics_files/libs/quarto-html/tippy.umd.min.js
