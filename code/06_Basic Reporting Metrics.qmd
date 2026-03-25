@@ -151,7 +151,8 @@ n_high_risk_period <- dat_clean %>%
 * `r n_high_risk_period` high risk contacts are still in their high risk period requiring follow up
 
 ```{r}
-#| label: summary_table
+#| label: tbl-sum
+#| tbl-cap: "Summary of Cases and Contacts for HPAI facility exposures"
 #| echo: false
 #| message: false
 #| warning: false
@@ -198,5 +199,6 @@ summary_ip <- dat_ip %>%
   ) %>%
   ungroup()
 
-summary_ip
+summary_ip %>%
+  gt()
 ```
