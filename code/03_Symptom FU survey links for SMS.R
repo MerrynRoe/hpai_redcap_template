@@ -69,17 +69,29 @@ contact_dat <- redcap %>%
   select(
     record_id,
     sms_consent,
+    phone,
     contact_number,
-    first_name, 
+    first_name, ## Note using first_name (PHO verified) instead of contact_name (provided by facility)
     last_exposure_date_ip1,
     last_exposure_date_ip2
     # re-exposed self-report? create new date variable?
   ) %>%
   filter(sms_consent == 1)
 
+# Use new PHO verified phone number, if missing revert back to original contact number
+contact_dat <- contact_dat %>%
+  mutate(phone = as.character(phone),
+         contact_number = as.character(contact_number)) %>%
+  mutate(contact_number = case_when(
+    !is.na(phone) ~ phone,
+    is.na(phone) ~ contact_number,
+    TRUE ~ NA
+  )) %>%
+  select(-phone)
+
 # REDCap unique survey link
 # Download from survey distribution tools, ensure it is the correct survey and you add '_fu_link' to doc name to avoid confusion
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-03-25_1607_fu_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-03-26_1228_fu_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -98,6 +110,10 @@ date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from today
 genesis <- merged_data %>%
   filter(last_exposure_date_all >= date_10_days_ago) %>%
   select(first_name, contact_number, survey_link) %>%
-  mutate(contact_number = paste0("+", contact_number)) # Format phone number for essendex
+  mutate(contact_number = paste0("+", contact_number))%>% # Format phone number for essendex
+  mutate(first_name = str_to_title(first_name))
+
+## Export sheet ready for genesis
+### Note if you open this excel sheet the contact number formatting breaks - check in R not in excel ### 
 
 write.csv(genesis, file = here::here("outputs", paste0("sms_list_sympt_fu_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
