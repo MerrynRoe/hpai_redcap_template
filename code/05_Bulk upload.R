@@ -24,7 +24,7 @@ bulk_upload <- dat_clean %>%
          LINKED_TO_AN_OUTBREAK_SPECIFY = "12345678910" ### Update to PHESS outbreak ID ###
   ) %>%
   # Filter out cases triaged out
-  filter(exposure_ip1_yn != 1 | exposure_ip2_yn != 1) %>%
+  filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
   select(-exposure_risk_calculated_all, -exposure_ip1_yn, -exposure_ip2_yn) %>%
   # Format var names to match DH template
   rename_with(toupper)
