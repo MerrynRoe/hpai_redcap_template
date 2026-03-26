@@ -174,9 +174,6 @@ summary_ip <- dat_ip %>%
   group_by(ip_site) %>%
   summarise(
 
-    # Total contacts
-    `Total Contacts` = n(),
-
     # Suspected cases
     `Suspected Cases` = sum(symptoms == 1 | symptoms_yn_fu == 1, na.rm = TRUE),
 
@@ -186,6 +183,9 @@ summary_ip <- dat_ip %>%
       test_results %in% c(2, 3),
       na.rm = TRUE
     ),
+    
+    # Total contacts
+    `Total Contacts` = n(),
 
     # High risk contacts
     `High Risk Contacts` = sum(
