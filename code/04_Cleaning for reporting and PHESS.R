@@ -310,10 +310,22 @@ dat_clean <- dat_clean %>%
       exposure_risk_assessment_ip2 == 1 & exposure_risk_calculated_ip2 != "Low Risk" ~ "Risk assessment mismatch",
       exposure_risk_assessment_ip2 == 2 & exposure_risk_calculated_ip2 != "Negligible Risk" ~ "Risk assessment mismatch",
       TRUE ~ NA_character_
-  ))
+  )) %>%
+  # Adding labels to REDCap 'PHO assigned' risk
+  mutate(
+    across(
+      c(exposure_risk_assessment_ip1, exposure_risk_assessment_ip2),
+      ~ factor(.,
+               levels = c(0, 1, 2),
+               labels = c("High Level Exposure",
+                          "Low Level Exposure",
+                          "Negligible Level Exposure"))
+    )
+  )
 
 # Check
 dat_clean %>%
+  filter(!is.na(exposure_risk_assessment_ip1)) %>%
   select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
   view()
 
@@ -354,7 +366,16 @@ dat_clean <- dat_clean %>%
     .groups = "drop"
   )
 
-## To do
-# Confirmed cases
-# exposure_ip1_yn exposure_ip2_yn == 1
-# test_results == 2 or == 3 
+## TODO
+# Confirmed cases variable?
+  # exposure_ip1_yn exposure_ip2_yn == 1
+  # test_results == 2 or == 3 
+
+# QA export
+dat_qa_risk <- dat_clean %>%
+  filter(exposure_risk_qa_ip1 == "Risk assessment mismatch" | exposure_risk_qa_ip2 == "Risk assessment mismatch") %>%
+  select(record_id, first_name, phone, pho_name, 
+         exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, 
+         exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2)
+
+write.csv(dat_qa_risk, file = here::here("outputs", paste0("dat_qa_risk_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
