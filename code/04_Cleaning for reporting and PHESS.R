@@ -314,7 +314,7 @@ dat_clean <- dat_clean %>%
 
 # Check
 dat_clean %>%
-  select(record_id,  exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
+  select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
   view()
 
 # Add high level risk assessment
@@ -342,6 +342,17 @@ dat_clean <- dat_clean %>%
   mutate(last_exposure_date_ip1 = as.Date(last_exposure_date_ip1),
          last_exposure_date_ip2 = as.Date(last_exposure_date_ip2),
          last_exposure_date_all =  pmax(last_exposure_date_ip1, last_exposure_date_ip2, na.rm = TRUE))
+
+# One row per individual and back fill from repeat instances
+dat_clean <- dat_clean %>%
+  group_by(record_id) %>%
+  summarise(
+    across(everything(), ~ {
+      x <- .
+      if (all(is.na(x))) NA else x[which(!is.na(x))[1]]
+    }),
+    .groups = "drop"
+  )
 
 ## To do
 # Confirmed cases
