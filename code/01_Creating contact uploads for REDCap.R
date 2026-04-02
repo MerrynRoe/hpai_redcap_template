@@ -7,20 +7,23 @@ pacman::p_load(
   here,          # to locate files
   tidyverse,     # to clean, handle, and plot the data (includes ggplot2 package)
   janitor,       # to clean column names
-  ggplot2
+  ggplot2,
+  keyring
 )
 
 # Import caselist - ensure most upto date version
 dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_upload_template_20260326.csv"))
 
 # Import REDCap case list
-source(here::here("code", "api_tokens.R"))
+
+# Using Keyring to store APIs - run this for the first time
+#keyring::key_set("hpai_redcap_token")
 
 # Using API
 #!/usr/bin/env Rscript
-token <- api_token
+
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
-formData <- list("token"=token,
+formData <- list("token"=keyring::key_get("hpai_redcap_token"),
                  content='record',
                  action='export',
                  format='csv',
