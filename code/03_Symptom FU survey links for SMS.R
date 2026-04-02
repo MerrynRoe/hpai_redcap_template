@@ -15,13 +15,12 @@ pacman::p_load(
 
 # REDCap contact data
 # Import REDCap case list
-source(here::here("code", "api_tokens.R"))
 
 # Using API
 #!/usr/bin/env Rscript
-token <- api_token
+
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
-formData <- list("token"=token,
+formData <- list("token"=keyring::key_get("hpai_redcap_token"),
                  content='record',
                  action='export',
                  format='csv',
