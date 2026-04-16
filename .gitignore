@@ -22,12 +22,15 @@
 # R Environment Variables
 .Renviron
 
-# Any APIs
-api_tokens.R
+# Ignore everything in these folders
+outputs/*
+raw_data/*
 
-# Ignore project-specific folders
-outputs/
-raw_data/
+# But keep files ending in _template (any extension)
+!outputs/*_template.*
+!raw_data/*_template.*
+
+# Ignore weird outputs this needs to be fixed!
 code/06_Basic Reporting Metrics_files/libs/bootstrap/bootstrap-bb462d781dde1847d9e3ccf7736099dd.min.css
 code/06_Basic Reporting Metrics_files/libs/bootstrap/bootstrap-icons.css
 code/06_Basic Reporting Metrics_files/libs/bootstrap/bootstrap-icons.woff
