@@ -1,7 +1,6 @@
-hpai_redcap_template
-|_code
-|_raw_data
-|_outputs
-|_redcap_templates
+### Key directories
 
-Contents of raw_data & outputs ignored unless file ends with '_template.'
+- **raw_data/**: Contains input datasets. Only `_template.` files are tracked in Git.
+- **outputs/**: Stores generated results (plots, tables). 
+- **code/**: Code templates for project.
+- **redcap_templates/**: REDCap templates for project.
