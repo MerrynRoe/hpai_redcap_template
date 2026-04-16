@@ -34,5 +34,5 @@ raw_data/*
 !outputs/*_template.*
 !raw_data/*_template.*
 
-# Ignore files created in QDM rendering
+# Ignore files created in QMD rendering
 06_Basic Reporting Metrics_files/
