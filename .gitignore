@@ -22,6 +22,10 @@
 # R Environment Variables
 .Renviron
 
+# Keep folders
+!outputs/
+!raw_data/
+
 # Ignore everything in these folders
 outputs/*
 raw_data/*
