@@ -16,7 +16,7 @@ dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_up
 
 # Import REDCap case list
 
-# Using Keyring to store APIs - run this for the first time
+# Using Keyring to store APIs - run the line below just once per machine, re-hash out after run to allow for easy re-runs
 #keyring::key_set("hpai_redcap_token")
 
 # Using API
