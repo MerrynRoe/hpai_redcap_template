@@ -12,7 +12,7 @@ pacman::p_load(
 )
 
 # Import caselist - ensure most upto date version
-dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_upload_template_20260326.csv"))
+dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_upload_20260421.csv"))
 
 # Import REDCap case list
 
@@ -38,6 +38,20 @@ formData <- list("token"=keyring::key_get("hpai_redcap_token"),
 )
 response <- httr::POST(url, body = formData, encode = "form")
 redcap <- httr::content(response)
+
+# If REDCap is completely empty, create a skeleton dataframe
+if (is.null(redcap) || nrow(as.data.frame(redcap)) == 0) {
+  redcap <- tibble::tibble(
+    record_id = numeric(),
+    first_name = character(),
+    phone = character(),
+    exposure_ip1_yn = numeric(),
+    contact_name = character(),
+    contact_number = character()
+  )
+} else {
+  redcap <- as.data.frame(redcap)
+}
 
 redcap <- redcap %>%
   select(record_id, first_name, phone, exposure_ip1_yn, exposure_ip1_yn)
@@ -65,14 +79,14 @@ dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
 
 redcap <- redcap %>%
   mutate(
-    ## Todo clean entries with spaces ie 0401 088 851
     contact_number = phone %>%
-      str_remove_all("[^0-9]") %>%          # remove spaces, +, brackets, etc.
-      str_replace("^0", "") %>%             # drop leading 0 (e.g., 04...)
-      str_replace("^61", "61") %>%          # ensure consistent 61 prefix
-      { ifelse(str_starts(., "4"), paste0("61", .), .) } # add "61" if missing
+      str_remove_all("[^0-9]") %>%
+      str_replace("^0", "") %>%
+      str_replace("^61", "61") %>%
+      { ifelse(str_starts(., "4"), paste0("61", .), .) } %>%
+      as.character(), 
+    contact_name = str_to_lower(first_name) %>% as.character()
   ) %>%
-  mutate(contact_name = str_to_lower(first_name)) %>%
   select(contact_name, contact_number, record_id, exposure_ip1_yn)
 
 dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
