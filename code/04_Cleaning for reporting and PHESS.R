@@ -17,7 +17,7 @@ pacman::p_load(
 
 # Using API
 #!/usr/bin/env Rscript
-token <- api_token
+
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
 formData <- list("token"=keyring::key_get("hpai_redcap_token"),
                  content='record',
@@ -49,246 +49,167 @@ redcap <- redcap %>%
 # unprotected high-risk activities
 
 dat_clean <- redcap %>%
-  mutate(exposure_risk_calculated_ip1 = case_when(
-    # ----------------------
-    # 🔴 HIGH RISK
-    # ----------------------
-    high_risk_ppe_ip1 %in% c("2", "3") |
+  mutate(
+
+  # ======================
+  # IP1
+  # ======================
+  exposure_risk_calculated_ip1 = case_when(
+
+    # 🔴 HIGH RISK (direct/high risk activities w breach)
+    (
+      high_risk_activities_ip1 %in% c("1", "3") | 
+        contact_animals_ip1 %in% c("1", "3")
+      ) &
+      
+    (  
+      high_risk_ppe_ip1 %in% c("2", "3") |
       high_risk_ppe_breach_ip1 %in% c("1", "3") |
       high_risk_ppe_removal_ip1 %in% c("2", "3") |
-      
-      contact_animals_ppe_ip1 %in% c("2", "3") |
-      contact_animals_ppe_breach_ip1 %in% c("1", "3") |
-      contact_animals_ppe_removal_ip1 %in% c("2", "3") |
-      
-      contact_objects_ppe_ip1 %in% c("2", "3") |
-      contact_objects_ppe_breach_ip1 %in% c("1", "3") |
-      contact_objects_ppe_removal_ip1 %in% c("2", "3") |
-      
-      contact_other_ppe_ip1 %in% c("2", "3") |
-      contact_other_ppe_breach_ip1 %in% c("1", "3") |
-      contact_other_ppe_removal_ip1 %in% c("2", "3")
-    ~ "High Risk",
-    
-    
-    # ----------------------
+
+      contact_ppe_ip1 %in% c("2", "3") |
+      contact_ppe_breach_ip1 %in% c("1", "3") |
+      contact_ppe_removal_ip1 %in% c("2", "3")
+    ) ~ "High Risk",
+
+
     # 🟠 LOW RISK (protected direct/high-risk contact)
-    # ----------------------
     (
-      high_risk_activities_ip1 %in% c("1", "3") &
-        (high_risk_ppe_ip1 == "1" |
-           high_risk_ppe_breach_ip1 == "2" |
-           high_risk_ppe_removal_ip1 == "1")
-    ) |
-      
-      (
-        contact_animals_ip1 %in% c("1", "3") &
-          (contact_animals_ppe_ip1 == "1" |
-             contact_animals_ppe_breach_ip1 == "2" |
-             contact_animals_ppe_removal_ip1 == "1")
-      ) |
-      
-      (
-        contact_objects_ip1 %in% c("1", "3") &
-          (contact_objects_ppe_ip1 == "1" |
-             contact_objects_ppe_breach_ip1 == "2" |
-             contact_objects_ppe_removal_ip1 == "1")
-      ) |
-      
-      (
-        contact_other_ip1 %in% c("1", "3") &
-          (contact_other_ppe_ip1 == "1" |
-             contact_other_ppe_breach_ip1 == "2" |
-             contact_other_ppe_removal_ip1 == "1")
-      )
-    ~ "Low Risk",
-    
-    
-    # ----------------------
-    # 🟡 LOW RISK (vicinity exposure)
-    # ----------------------
-    vicinity_animals_ppe_ip1 %in% c("2", "3") |
-      vicinity_animals_ppe_breach_ip1 %in% c("1", "3") |
-      vicinity_animals_ppe_removal_ip1 %in% c("2", "3") |
-      
-      vicinity_objects_ppe_ip1 %in% c("2", "3") |
-      vicinity_objects_ppe_breach_ip1 %in% c("1", "3") |
-      vicinity_objects_ppe_removal_ip1 %in% c("2", "3") |
-      
-      vicinity_other_ppe_ip1 %in% c("2", "3") |
-      vicinity_other_ppe_breach_ip1 %in% c("1", "3") |
-      vicinity_other_ppe_removal_ip1 %in% c("2", "3") |
-      
-      vicinity_exposure_time_ip1 == "1"
-    ~ "Low Risk",
-    
-    
-    # ----------------------
-    # 🟢 NEGLIGIBLE RISK
-    # ----------------------
-    (
-      high_risk_activities_ip1 == "2" &
-        contact_animals_ip1 == "2" &
-        contact_objects_ip1 == "2" &
-        contact_other_ip1 == "2"
+      high_risk_activities_ip1 %in% c("1", "3") | 
+        contact_animals_ip1 %in% c("1", "3")
     ) &
       
       (
+        high_risk_ppe_ip1 == "1" |
+        high_risk_ppe_breach_ip1 == "2" |
+        high_risk_ppe_removal_ip1 == "1" |
+
+        contact_ppe_ip1 == "1" |
+        contact_ppe_breach_ip1 == "2" |
+        contact_ppe_removal_ip1 == "1"
+      
+    ) ~ "Low Risk",
+
+
+    # 🟡 LOW RISK (vicinity exposure w compromised PPE OR exceed 15 time)
+    vicinity_animals_ip1 %in% c("1", "3") &
+  (
+      vicinity_ppe_ip1 %in% c("2", "3") |
+      vicinity_ppe_breach_ip1 %in% c("1", "3") |
+      vicinity_ppe_removal_ip1 %in% c("2", "3") |
+      vicinity_exposure_time_ip1 == "1"
+    ) ~ "Low Risk",
+
+
+    # 🟢 NEGLIGIBLE RISK
+    (
+      high_risk_activities_ip1 == "2" &
+      contact_animals_ip1 == "2" &
+      contact_objects_ip1 == "2" &
+      contact_other_ip1 == "2"
+    ) &
+    (
+      (
+        vicinity_animals_ip1 == "2" &
+        vicinity_objects_ip1 == "2" &
+        vicinity_other_ip1 == "2"
+      ) |
+      (
         (
-          vicinity_animals_ip1 == "2" &
-            vicinity_objects_ip1 == "2" &
-            vicinity_other_ip1 == "2"
-        ) |
-          
-          (
-            (
-              vicinity_animals_ip1 %in% c("1", "3") &
-                vicinity_animals_ppe_ip1 == "1" &
-                vicinity_animals_ppe_breach_ip1 == "2" &
-                vicinity_animals_ppe_removal_ip1 == "1"
-            ) |
-              
-              (
-                vicinity_objects_ip1 %in% c("1", "3") &
-                  vicinity_objects_ppe_ip1 == "1" &
-                  vicinity_objects_ppe_breach_ip1 == "2" &
-                  vicinity_objects_ppe_removal_ip1 == "1"
-              ) |
-              
-              (
-                vicinity_other_ip1 %in% c("1", "3") &
-                  vicinity_other_ppe_ip1 == "1" &
-                  vicinity_other_ppe_breach_ip1 == "2" &
-                  vicinity_other_ppe_removal_ip1 == "1"
-              )
-          ) &
-          vicinity_exposure_time_ip1 == "0"
+          vicinity_animals_ip1 %in% c("1", "3") |
+          vicinity_objects_ip1 %in% c("1", "3") |
+          vicinity_other_ip1 %in% c("1", "3")
+        ) &
+        vicinity_ppe_ip1 == "1" &
+        vicinity_ppe_breach_ip1 == "2" &
+        vicinity_ppe_removal_ip1 == "1"
       )
-    ~ "Negligible Risk",
-    
+    ) &
+    vicinity_exposure_time_ip1 == "0" ~ "Negligible Risk",
+
     TRUE ~ NA_character_
   ),
-  # IP 2
+
+
+  # ======================
+  # IP2
+  # ======================
   exposure_risk_calculated_ip2 = case_when(
-    # ----------------------
-    # 🔴 HIGH RISK
-    # ----------------------
-    high_risk_ppe_ip2 %in% c("2", "3") |
-      high_risk_ppe_breach_ip2 %in% c("1", "3") |
-      high_risk_ppe_removal_ip2 %in% c("2", "3") |
-      
-      contact_animals_ppe_ip2 %in% c("2", "3") |
-      contact_animals_ppe_breach_ip2 %in% c("1", "3") |
-      contact_animals_ppe_removal_ip2 %in% c("2", "3") |
-      
-      contact_objects_ppe_ip2 %in% c("2", "3") |
-      contact_objects_ppe_breach_ip2 %in% c("1", "3") |
-      contact_objects_ppe_removal_ip2 %in% c("2", "3") |
-      
-      contact_other_ppe_ip2 %in% c("2", "3") |
-      contact_other_ppe_breach_ip2 %in% c("1", "3") |
-      contact_other_ppe_removal_ip2 %in% c("2", "3")
-    ~ "High Risk",
     
-    
-    # ----------------------
-    # 🟠 LOW RISK (protected direct/high-risk contact)
-    # ----------------------
+    # 🔴 HIGH RISK (direct/high risk activities w breach)
     (
-      high_risk_activities_ip2 %in% c("1", "3") &
-        (high_risk_ppe_ip2 == "1" |
-           high_risk_ppe_breach_ip2 == "2" |
-           high_risk_ppe_removal_ip2 == "1")
-    ) |
+      high_risk_activities_ip2 %in% c("1", "3") | 
+        contact_animals_ip2 %in% c("1", "3")
+    ) &
+      
+      (  
+        high_risk_ppe_ip2 %in% c("2", "3") |
+          high_risk_ppe_breach_ip2 %in% c("1", "3") |
+          high_risk_ppe_removal_ip2 %in% c("2", "3") |
+          
+          contact_ppe_ip2 %in% c("2", "3") |
+          contact_ppe_breach_ip2 %in% c("1", "3") |
+          contact_ppe_removal_ip2 %in% c("2", "3")
+      ) ~ "High Risk",
+    
+    
+    # 🟠 LOW RISK (protected direct/high-risk contact)
+    (
+      high_risk_activities_ip2 %in% c("1", "3") | 
+        contact_animals_ip2 %in% c("1", "3")
+    ) &
       
       (
-        contact_animals_ip2 %in% c("1", "3") &
-          (contact_animals_ppe_ip2 == "1" |
-             contact_animals_ppe_breach_ip2 == "2" |
-             contact_animals_ppe_removal_ip2 == "1")
-      ) |
-      
+        high_risk_ppe_ip2 == "1" |
+          high_risk_ppe_breach_ip2 == "2" |
+          high_risk_ppe_removal_ip2 == "1" |
+          
+          contact_ppe_ip2 == "1" |
+          contact_ppe_breach_ip2 == "2" |
+          contact_ppe_removal_ip2 == "1"
+        
+      ) ~ "Low Risk",
+    
+    
+    # 🟡 LOW RISK (vicinity exposure w compromised PPE OR exceed 15 time)
+    vicinity_animals_ip2 %in% c("1", "3") &
       (
-        contact_objects_ip2 %in% c("1", "3") &
-          (contact_objects_ppe_ip2 == "1" |
-             contact_objects_ppe_breach_ip2 == "2" |
-             contact_objects_ppe_removal_ip2 == "1")
-      ) |
-      
-      (
-        contact_other_ip2 %in% c("1", "3") &
-          (contact_other_ppe_ip2 == "1" |
-             contact_other_ppe_breach_ip2 == "2" |
-             contact_other_ppe_removal_ip2 == "1")
-      )
-    ~ "Low Risk",
+        vicinity_ppe_ip2 %in% c("2", "3") |
+          vicinity_ppe_breach_ip2 %in% c("1", "3") |
+          vicinity_ppe_removal_ip2 %in% c("2", "3") |
+          vicinity_exposure_time_ip2 == "1"
+      ) ~ "Low Risk",
     
     
-    # ----------------------
-    # 🟡 LOW RISK (vicinity exposure)
-    # ----------------------
-    vicinity_animals_ppe_ip2 %in% c("2", "3") |
-      vicinity_animals_ppe_breach_ip2 %in% c("1", "3") |
-      vicinity_animals_ppe_removal_ip2 %in% c("2", "3") |
-      
-      vicinity_objects_ppe_ip2 %in% c("2", "3") |
-      vicinity_objects_ppe_breach_ip2 %in% c("1", "3") |
-      vicinity_objects_ppe_removal_ip2 %in% c("2", "3") |
-      
-      vicinity_other_ppe_ip2 %in% c("2", "3") |
-      vicinity_other_ppe_breach_ip2 %in% c("1", "3") |
-      vicinity_other_ppe_removal_ip2 %in% c("2", "3") |
-      
-      vicinity_exposure_time_ip2 == "1"
-    ~ "Low Risk",
-    
-    
-    # ----------------------
     # 🟢 NEGLIGIBLE RISK
-    # ----------------------
     (
       high_risk_activities_ip2 == "2" &
         contact_animals_ip2 == "2" &
         contact_objects_ip2 == "2" &
         contact_other_ip2 == "2"
     ) &
-      
       (
         (
           vicinity_animals_ip2 == "2" &
             vicinity_objects_ip2 == "2" &
             vicinity_other_ip2 == "2"
         ) |
-          
           (
             (
-              vicinity_animals_ip2 %in% c("1", "3") &
-                vicinity_animals_ppe_ip2 == "1" &
-                vicinity_animals_ppe_breach_ip2 == "2" &
-                vicinity_animals_ppe_removal_ip2 == "1"
-            ) |
-              
-              (
-                vicinity_objects_ip2 %in% c("1", "3") &
-                  vicinity_objects_ppe_ip2 == "1" &
-                  vicinity_objects_ppe_breach_ip2 == "2" &
-                  vicinity_objects_ppe_removal_ip2 == "1"
-              ) |
-              
-              (
-                vicinity_other_ip2 %in% c("1", "3") &
-                  vicinity_other_ppe_ip2 == "1" &
-                  vicinity_other_ppe_breach_ip2 == "2" &
-                  vicinity_other_ppe_removal_ip2 == "1"
-              )
-          ) &
-          vicinity_exposure_time_ip2 == "0"
-      )
-    ~ "Negligible Risk",
+              vicinity_animals_ip2 %in% c("1", "3") |
+                vicinity_objects_ip2 %in% c("1", "3") |
+                vicinity_other_ip2 %in% c("1", "3")
+            ) &
+              vicinity_ppe_ip2 == "1" &
+              vicinity_ppe_breach_ip2 == "2" &
+              vicinity_ppe_removal_ip2 == "1"
+          )
+      ) &
+      vicinity_exposure_time_ip2 == "0" ~ "Negligible Risk",
     
     TRUE ~ NA_character_
   )
-  )
+)
 
 # Check
 dat_clean %>%
