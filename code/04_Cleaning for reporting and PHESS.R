@@ -59,7 +59,9 @@ dat_clean <- redcap %>%
     # 🔴 HIGH RISK (direct/high risk activities w breach)
     (
       high_risk_activities_ip1 %in% c("1", "3") | 
-        contact_animals_ip1 %in% c("1", "3")
+        contact_animals_ip1 %in% c("1", "3") |
+        contact_objects_ip1 %in% c("1", "3") |
+        contact_other_ip1 %in% c("1", "3")
       ) &
       
     (  
@@ -76,7 +78,9 @@ dat_clean <- redcap %>%
     # 🟠 LOW RISK (protected direct/high-risk contact)
     (
       high_risk_activities_ip1 %in% c("1", "3") | 
-        contact_animals_ip1 %in% c("1", "3")
+        contact_animals_ip1 %in% c("1", "3") |
+        contact_objects_ip1 %in% c("1", "3") |
+        contact_other_ip1 %in% c("1", "3")
     ) &
       
       (
@@ -139,7 +143,9 @@ dat_clean <- redcap %>%
     # 🔴 HIGH RISK (direct/high risk activities w breach)
     (
       high_risk_activities_ip2 %in% c("1", "3") | 
-        contact_animals_ip2 %in% c("1", "3")
+        contact_animals_ip2 %in% c("1", "3") |
+        contact_objects_ip2 %in% c("1", "3") |
+        contact_other_ip2 %in% c("1", "3")
     ) &
       
       (  
@@ -156,7 +162,9 @@ dat_clean <- redcap %>%
     # 🟠 LOW RISK (protected direct/high-risk contact)
     (
       high_risk_activities_ip2 %in% c("1", "3") | 
-        contact_animals_ip2 %in% c("1", "3")
+        contact_animals_ip2 %in% c("1", "3") |
+        contact_objects_ip2 %in% c("1", "3") |
+        contact_other_ip2 %in% c("1", "3")
     ) &
       
       (
