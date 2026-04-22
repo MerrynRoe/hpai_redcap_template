@@ -53,7 +53,7 @@ contact_dat <- redcap %>%
 
 # REDCap unique survey link
 # Download from survey distribution tools, ensure it is the correct survey and you add '_triage_link' to doc name to avoid confusion
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-03-26_1130_triage_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagement_Participants_2026-04-21_1742_triage_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%
