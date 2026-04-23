@@ -11,7 +11,7 @@ pacman::p_load(
 )
 
 # Import caselist - ensure most upto date version
-dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_upload_template_20260326.csv"))
+dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_upload_20260421.csv"))
 
 # Import REDCap case list
 source(here::here("code", "api_tokens.R"))
@@ -49,7 +49,7 @@ max_id <- if (length(redcap$record_id) == 0 || all(is.na(redcap$record_id))) {
 # Match on key fields, ie first name and mobile number
 
 dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
-  mutate(case_list_ip1_yn = 1) %>% ### Create contact list flag, ensure variable is updated per facility ###
+  mutate(contact_list_ip1_yn  = 1) %>% ### Create contact list flag, ensure variable is updated per facility ###
   mutate(
     contact_number = phone %>%
       str_remove_all("[^0-9]") %>%          # remove spaces, +, brackets, etc.
