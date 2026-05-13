@@ -17,7 +17,7 @@ pacman::p_load(
 
 # Using API
 #!/usr/bin/env Rscript
-token <- api_token
+
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
 formData <- list("token"=keyring::key_get("hpai_redcap_token"),
                  content='record',
