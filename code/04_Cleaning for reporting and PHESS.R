@@ -65,13 +65,13 @@ dat_clean <- redcap %>%
       ) &
       
     (  
-      high_risk_ppe_ip1 %in% c("2", "3") |
+      high_risk_ppe_ip1 %in% c("0", "3") |
       high_risk_ppe_breach_ip1 %in% c("1", "3") |
-      high_risk_ppe_removal_ip1 %in% c("2", "3") |
+      high_risk_ppe_removal_ip1 %in% c("0", "3") |
 
-      contact_ppe_ip1 %in% c("2", "3") |
+      contact_ppe_ip1 %in% c("0", "3") |
       contact_ppe_breach_ip1 %in% c("1", "3") |
-      contact_ppe_removal_ip1 %in% c("2", "3")
+      contact_ppe_removal_ip1 %in% c("0", "3")
     ) ~ "High Risk",
 
 
@@ -85,11 +85,11 @@ dat_clean <- redcap %>%
       
       (
         high_risk_ppe_ip1 == "1" |
-        high_risk_ppe_breach_ip1 == "2" |
+        high_risk_ppe_breach_ip1 == "0" |
         high_risk_ppe_removal_ip1 == "1" |
 
         contact_ppe_ip1 == "1" |
-        contact_ppe_breach_ip1 == "2" |
+        contact_ppe_breach_ip1 == "0" |
         contact_ppe_removal_ip1 == "1"
       
     ) ~ "Low Risk",
@@ -98,25 +98,25 @@ dat_clean <- redcap %>%
     # 🟡 LOW RISK (vicinity exposure w compromised PPE OR exceed 15 time)
     vicinity_animals_ip1 %in% c("1", "3") &
   (
-      vicinity_ppe_ip1 %in% c("2", "3") |
+      vicinity_ppe_ip1 %in% c("0", "3") |
       vicinity_ppe_breach_ip1 %in% c("1", "3") |
-      vicinity_ppe_removal_ip1 %in% c("2", "3") |
+      vicinity_ppe_removal_ip1 %in% c("0", "3") |
       vicinity_exposure_time_ip1 == "1"
     ) ~ "Low Risk",
 
 
     # 🟢 NEGLIGIBLE RISK
     (
-      high_risk_activities_ip1 == "2" &
-      contact_animals_ip1 == "2" &
-      contact_objects_ip1 == "2" &
-      contact_other_ip1 == "2"
+      high_risk_activities_ip1 == "0" &
+      contact_animals_ip1 == "0" &
+      contact_objects_ip1 == "0" &
+      contact_other_ip1 == "0"
     ) &
     (
       (
-        vicinity_animals_ip1 == "2" &
-        vicinity_objects_ip1 == "2" &
-        vicinity_other_ip1 == "2"
+        vicinity_animals_ip1 == "0" &
+        vicinity_objects_ip1 == "0" &
+        vicinity_other_ip1 == "0"
       ) |
       (
         (
@@ -125,7 +125,7 @@ dat_clean <- redcap %>%
           vicinity_other_ip1 %in% c("1", "3")
         ) &
         vicinity_ppe_ip1 == "1" &
-        vicinity_ppe_breach_ip1 == "2" &
+        vicinity_ppe_breach_ip1 == "0" &
         vicinity_ppe_removal_ip1 == "1"
       )
     ) &
@@ -149,13 +149,13 @@ dat_clean <- redcap %>%
     ) &
       
       (  
-        high_risk_ppe_ip2 %in% c("2", "3") |
+        high_risk_ppe_ip2 %in% c("0", "3") |
           high_risk_ppe_breach_ip2 %in% c("1", "3") |
-          high_risk_ppe_removal_ip2 %in% c("2", "3") |
+          high_risk_ppe_removal_ip2 %in% c("0", "3") |
           
-          contact_ppe_ip2 %in% c("2", "3") |
+          contact_ppe_ip2 %in% c("0", "3") |
           contact_ppe_breach_ip2 %in% c("1", "3") |
-          contact_ppe_removal_ip2 %in% c("2", "3")
+          contact_ppe_removal_ip2 %in% c("0", "3")
       ) ~ "High Risk",
     
     
@@ -169,11 +169,11 @@ dat_clean <- redcap %>%
       
       (
         high_risk_ppe_ip2 == "1" |
-          high_risk_ppe_breach_ip2 == "2" |
+          high_risk_ppe_breach_ip2 == "0" |
           high_risk_ppe_removal_ip2 == "1" |
           
           contact_ppe_ip2 == "1" |
-          contact_ppe_breach_ip2 == "2" |
+          contact_ppe_breach_ip2 == "0" |
           contact_ppe_removal_ip2 == "1"
         
       ) ~ "Low Risk",
@@ -182,25 +182,25 @@ dat_clean <- redcap %>%
     # 🟡 LOW RISK (vicinity exposure w compromised PPE OR exceed 15 time)
     vicinity_animals_ip2 %in% c("1", "3") &
       (
-        vicinity_ppe_ip2 %in% c("2", "3") |
+        vicinity_ppe_ip2 %in% c("0", "3") |
           vicinity_ppe_breach_ip2 %in% c("1", "3") |
-          vicinity_ppe_removal_ip2 %in% c("2", "3") |
+          vicinity_ppe_removal_ip2 %in% c("0", "3") |
           vicinity_exposure_time_ip2 == "1"
       ) ~ "Low Risk",
     
     
     # 🟢 NEGLIGIBLE RISK
     (
-      high_risk_activities_ip2 == "2" &
-        contact_animals_ip2 == "2" &
-        contact_objects_ip2 == "2" &
-        contact_other_ip2 == "2"
+      high_risk_activities_ip2 == "0" &
+        contact_animals_ip2 == "0" &
+        contact_objects_ip2 == "0" &
+        contact_other_ip2 == "0"
     ) &
       (
         (
-          vicinity_animals_ip2 == "2" &
-            vicinity_objects_ip2 == "2" &
-            vicinity_other_ip2 == "2"
+          vicinity_animals_ip2 == "0" &
+            vicinity_objects_ip2 == "0" &
+            vicinity_other_ip2 == "0"
         ) |
           (
             (
@@ -209,7 +209,7 @@ dat_clean <- redcap %>%
                 vicinity_other_ip2 %in% c("1", "3")
             ) &
               vicinity_ppe_ip2 == "1" &
-              vicinity_ppe_breach_ip2 == "2" &
+              vicinity_ppe_breach_ip2 == "0" &
               vicinity_ppe_removal_ip2 == "1"
           )
       ) &
