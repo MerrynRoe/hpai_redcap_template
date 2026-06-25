@@ -25,15 +25,18 @@ bulk_upload <- dat_clean %>%
   ) %>%
   # Filter out cases triaged out
   filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
-  select(-exposure_risk_calculated_all, -exposure_ip1_yn, -exposure_ip2_yn) %>%
+  select(-exposure_risk_calculated_all) %>%
   # Format var names to match DH template
   rename_with(toupper)
 
 ## TODO
 # Filter out already uploaded cases???? Check with DH - on Q list
+# Filter out incomplete cases?
 
 
 
 # Export for DH 
 
-write.csv(bulk_upload, file = here::here("outputs", paste0("phess_bulk_upload_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
+write.csv(bulk_upload, file = here::here("outputs", paste0("phess_bulk_upload_", format(Sys.time(), "%Y%m%d"), ".csv")), 
+          row.names = FALSE,
+          na = "")
