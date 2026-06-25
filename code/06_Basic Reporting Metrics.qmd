@@ -113,9 +113,9 @@ pc_total_contacts_exposed <- (n_total_contacts_exposed/n_total_contacts_responde
 
 # Total contacts interviewed (3 PHO led interview forms marked as 'complete')
 n_contacts_interviewed <- dat_clean %>%
-  filter(avian_influenza_case_demo_complete == 2 & 
-           (avian_influenza_case_facility_ip1_risk_complete == 2 | avian_influenza_case_facility_ip2_risk_complete == 2) &
-  avian_influenza_case_symptoms_treatment_complete == 2) %>%
+  filter(avian_influenza_contact_demo_complete == 2 & 
+           (avian_influenza_contact_facility_ip1_risk_complete == 2 | avian_influenza_contact_facility_ip2_risk_complete == 2) &
+  avian_influenza_contact_symptoms_treatment_complete == 2) %>%
   nrow()
 
 pc_contacts_interviewed <- (n_contacts_interviewed/n_total_contacts_exposed * 100)
@@ -193,6 +193,11 @@ summary_ip <- dat_ip %>%
       na.rm = TRUE
     ),
 
+    # Seasonal vaccination proportion from initial interview - not currently including any additional PHO facilitated vax
+    `Seasonal Vax %` = round(
+    100 * sum(seasonal_vax_yn == 1, na.rm = TRUE) /
+    sum(seasonal_vax_yn %in% c(2, 1, 3), na.rm = TRUE),1), ## Need to update to 0 when coding in REDCap fixed
+    
     # Final contact at risk date
     `Final contact at risk date` = max(last_exposure_date_all, na.rm = TRUE)
 
