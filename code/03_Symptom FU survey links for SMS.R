@@ -18,6 +18,7 @@ pacman::p_load(
 
 # Using API
 #!/usr/bin/env Rscript
+##BHS comment: Not sure what these comments means 
 
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
 formData <- list("token"=keyring::key_get("hpai_redcap_token"),
@@ -63,6 +64,8 @@ redcap %>%
   select(contains("date_ip1")) %>%
   view()
 
+##BHS comment: not sure what this view is doing
+
 # Cleaning further
 contact_dat <- redcap %>%
   select(
@@ -90,7 +93,7 @@ contact_dat <- contact_dat %>%
 
 # REDCap unique survey link
 # Download from survey distribution tools, ensure it is the correct survey and you add '_fu_link' to doc name to avoid confusion
-link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagement_Participants_2026-04-22_0923_fu_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-06-29_1453_fu_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -116,3 +119,5 @@ genesis <- merged_data %>%
 ### Note if you open this excel sheet the contact number formatting breaks - check in R not in excel ### 
 
 write.csv(genesis, file = here::here("outputs", paste0("sms_list_sympt_fu_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
+
+##BHS comment: my output has no names popping up?
