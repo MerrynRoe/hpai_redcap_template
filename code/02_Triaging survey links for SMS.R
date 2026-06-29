@@ -53,7 +53,11 @@ contact_dat <- redcap %>%
 
 # REDCap unique survey link
 # Download from survey distribution tools, ensure it is the correct survey and you add '_triage_link' to doc name to avoid confusion
-link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagement_Participants_2026-04-21_1742_triage_link.csv")) # Update with most recent version
+##BHS comment: What am I downloading? I assume I'm going to survey distribution tools > participant list > export list? 
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-06-29_1419_triage_link.csv")) # Update with most recent version
+
+##BHS comment: Had to change name in the link 
+
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -80,3 +84,4 @@ genesis <- merged_data %>%
 
 write.csv(genesis, file = here::here("outputs", paste0("sms_list_triage_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
 
+##BHS: Beautiful this works 
