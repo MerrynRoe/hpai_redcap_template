@@ -14,15 +14,20 @@ pacman::p_load(
 # Import caselist - ensure most upto date version
 dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_upload_20260421.csv"))
 
+##BHS Comment: What is this caselist? Where is it derived from/how is it generated? Where in the work instructions indicate it's generation in the raw_data folder? Perhaps we can generate a more robust naming structure
+
 # Import REDCap case list
 
 # Using Keyring to store APIs - run the line below just once per machine, re-hash out after run to allow for easy re-runs
-#keyring::key_set("hpai_redcap_token")
+keyring::key_set("hpai_redcap_token")
+
+##BHS comment: Might need to spell out this step. It asks for a password but the user wouldn't know what to do here. 
 
 # Using API
 #!/usr/bin/env Rscript
+##BHS comment: What is this doing? 
 
-url <- "https://redcap.gvhealth.org.au/redcap/api/"
+url <- "https://redcap.gvhealth.org.au/redcap/api/" ##BHS comment: If this is templated, might be good for some comments here to direct to respective REDCap server 
 formData <- list("token"=keyring::key_get("hpai_redcap_token"),
                  content='record',
                  action='export',
@@ -121,3 +126,5 @@ write.csv(
   here::here("outputs", paste0(timestamp, "_import_to_redcap_for_triage.csv")),
   row.names = FALSE
 )
+
+##BHS comment: All looks to be working
