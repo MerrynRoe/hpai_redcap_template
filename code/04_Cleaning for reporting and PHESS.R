@@ -46,178 +46,86 @@ redcap <- redcap %>%
 # Calculate risk levels
 # exposure_risk_calculated_ip1, 
 # exposure_risk_calculated_all
-# unprotected high-risk activities
+## Note - requires form to be completed (no 'missing') values. PHOs can enter 'unsure' if info is not available.
 
-dat_clean <- redcap %>%
-  mutate(
+dat_clean <- redcap
 
-  # ======================
-  # IP1
-  # ======================
-  exposure_risk_calculated_ip1 = case_when(
-
-    # 🔴 HIGH RISK (direct/high risk activities w breach)
-    (
-      high_risk_activities_ip1 %in% c("1", "3") | 
-        contact_animals_ip1 %in% c("1", "3") |
-        contact_objects_ip1 %in% c("1", "3") |
-        contact_other_ip1 %in% c("1", "3")
+for (ip in c("ip1", "ip2")) { # Add exposure site suffixes as required, ensure REDCap form is duplicated for new site before running
+  
+  dat_clean[[paste0("exposure_risk_calculated_test_", ip)]] <-
+    with(dat_clean, case_when(
+      
+      # 🔴 HIGH RISK
+      (
+        dat_clean[[paste0("high_risk_activities_", ip)]] %in% c("1","3") |
+          dat_clean[[paste0("contact_animals_", ip)]] %in% c("1","3") |
+          dat_clean[[paste0("contact_objects_", ip)]] %in% c("1","3") |
+          dat_clean[[paste0("contact_other_", ip)]] %in% c("1","3")
       ) &
-      
-    (  
-      high_risk_ppe_ip1 %in% c("0", "3") |
-      high_risk_ppe_breach_ip1 %in% c("1", "3") |
-      high_risk_ppe_removal_ip1 %in% c("0", "3") |
-
-      contact_ppe_ip1 %in% c("0", "3") |
-      contact_ppe_breach_ip1 %in% c("1", "3") |
-      contact_ppe_removal_ip1 %in% c("0", "3")
-    ) ~ "High Risk",
-
-
-    # 🟠 LOW RISK (protected direct/high-risk contact)
-    (
-      high_risk_activities_ip1 %in% c("1", "3") | 
-        contact_animals_ip1 %in% c("1", "3") |
-        contact_objects_ip1 %in% c("1", "3") |
-        contact_other_ip1 %in% c("1", "3")
-    ) &
-      
-      (
-        high_risk_ppe_ip1 == "1" |
-        high_risk_ppe_breach_ip1 == "0" |
-        high_risk_ppe_removal_ip1 == "1" |
-
-        contact_ppe_ip1 == "1" |
-        contact_ppe_breach_ip1 == "0" |
-        contact_ppe_removal_ip1 == "1"
-      
-    ) ~ "Low Risk",
-
-
-    # 🟡 LOW RISK (vicinity exposure w compromised PPE OR exceed 15 time)
-    vicinity_animals_ip1 %in% c("1", "3") &
-  (
-      vicinity_ppe_ip1 %in% c("0", "3") |
-      vicinity_ppe_breach_ip1 %in% c("1", "3") |
-      vicinity_ppe_removal_ip1 %in% c("0", "3") |
-      vicinity_exposure_time_ip1 == "1"
-    ) ~ "Low Risk",
-
-
-    # 🟢 NEGLIGIBLE RISK
-    (
-      high_risk_activities_ip1 == "0" &
-      contact_animals_ip1 == "0" &
-      contact_objects_ip1 == "0" &
-      contact_other_ip1 == "0"
-    ) &
-    (
-      (
-        vicinity_animals_ip1 == "0" &
-        vicinity_objects_ip1 == "0" &
-        vicinity_other_ip1 == "0"
-      ) |
-      (
         (
-          vicinity_animals_ip1 %in% c("1", "3") |
-          vicinity_objects_ip1 %in% c("1", "3") |
-          vicinity_other_ip1 %in% c("1", "3")
-        ) &
-        vicinity_ppe_ip1 == "1" &
-        vicinity_ppe_breach_ip1 == "0" &
-        vicinity_ppe_removal_ip1 == "1"
-      )
-    ) &
-    vicinity_exposure_time_ip1 == "0" ~ "Negligible Risk",
-
-    TRUE ~ NA_character_
-  ),
-
-
-  # ======================
-  # IP2
-  # ======================
-  exposure_risk_calculated_ip2 = case_when(
-    
-    # 🔴 HIGH RISK (direct/high risk activities w breach)
-    (
-      high_risk_activities_ip2 %in% c("1", "3") | 
-        contact_animals_ip2 %in% c("1", "3") |
-        contact_objects_ip2 %in% c("1", "3") |
-        contact_other_ip2 %in% c("1", "3")
-    ) &
+          dat_clean[[paste0("high_risk_ppe_", ip)]] %in% c("0","3") |
+            dat_clean[[paste0("high_risk_ppe_breach_", ip)]] %in% c("1","3") |
+            dat_clean[[paste0("high_risk_ppe_removal_", ip)]] %in% c("0","3") |
+            dat_clean[[paste0("contact_ppe_", ip)]] %in% c("0","3") |
+            dat_clean[[paste0("contact_ppe_breach_", ip)]] %in% c("1","3") |
+            dat_clean[[paste0("contact_ppe_removal_", ip)]] %in% c("0","3")
+        ) ~ "High Risk",
       
-      (  
-        high_risk_ppe_ip2 %in% c("0", "3") |
-          high_risk_ppe_breach_ip2 %in% c("1", "3") |
-          high_risk_ppe_removal_ip2 %in% c("0", "3") |
-          
-          contact_ppe_ip2 %in% c("0", "3") |
-          contact_ppe_breach_ip2 %in% c("1", "3") |
-          contact_ppe_removal_ip2 %in% c("0", "3")
-      ) ~ "High Risk",
-    
-    
-    # 🟠 LOW RISK (protected direct/high-risk contact)
-    (
-      high_risk_activities_ip2 %in% c("1", "3") | 
-        contact_animals_ip2 %in% c("1", "3") |
-        contact_objects_ip2 %in% c("1", "3") |
-        contact_other_ip2 %in% c("1", "3")
-    ) &
-      
+      # 🟠 LOW RISK
       (
-        high_risk_ppe_ip2 == "1" |
-          high_risk_ppe_breach_ip2 == "0" |
-          high_risk_ppe_removal_ip2 == "1" |
-          
-          contact_ppe_ip2 == "1" |
-          contact_ppe_breach_ip2 == "0" |
-          contact_ppe_removal_ip2 == "1"
-        
-      ) ~ "Low Risk",
-    
-    
-    # 🟡 LOW RISK (vicinity exposure w compromised PPE OR exceed 15 time)
-    vicinity_animals_ip2 %in% c("1", "3") &
-      (
-        vicinity_ppe_ip2 %in% c("0", "3") |
-          vicinity_ppe_breach_ip2 %in% c("1", "3") |
-          vicinity_ppe_removal_ip2 %in% c("0", "3") |
-          vicinity_exposure_time_ip2 == "1"
-      ) ~ "Low Risk",
-    
-    
-    # 🟢 NEGLIGIBLE RISK
-    (
-      high_risk_activities_ip2 == "0" &
-        contact_animals_ip2 == "0" &
-        contact_objects_ip2 == "0" &
-        contact_other_ip2 == "0"
-    ) &
-      (
+        dat_clean[[paste0("high_risk_activities_", ip)]] %in% c("1","3") |
+          dat_clean[[paste0("contact_animals_", ip)]] %in% c("1","3") |
+          dat_clean[[paste0("contact_objects_", ip)]] %in% c("1","3") |
+          dat_clean[[paste0("contact_other_", ip)]] %in% c("1","3")
+      ) &
         (
-          vicinity_animals_ip2 == "0" &
-            vicinity_objects_ip2 == "0" &
-            vicinity_other_ip2 == "0"
-        ) |
+          dat_clean[[paste0("high_risk_ppe_", ip)]] == "1" |
+            dat_clean[[paste0("high_risk_ppe_breach_", ip)]] == "0" |
+            dat_clean[[paste0("high_risk_ppe_removal_", ip)]] == "1" |
+            dat_clean[[paste0("contact_ppe_", ip)]] == "1" |
+            dat_clean[[paste0("contact_ppe_breach_", ip)]] == "0" |
+            dat_clean[[paste0("contact_ppe_removal_", ip)]] == "1"
+        ) ~ "Low Risk",
+      
+      # 🟡 LOW RISK (Vicinity)
+      dat_clean[[paste0("vicinity_animals_", ip)]] %in% c("1","3") &
+        (
+          dat_clean[[paste0("vicinity_ppe_", ip)]] %in% c("0","3") |
+            dat_clean[[paste0("vicinity_ppe_breach_", ip)]] %in% c("1","3") |
+            dat_clean[[paste0("vicinity_ppe_removal_", ip)]] %in% c("0","3") |
+            dat_clean[[paste0("vicinity_exposure_time_", ip)]] == "1"
+        ) ~ "Low Risk",
+      
+      # 🟢 NEGLIGIBLE
+      (
+        dat_clean[[paste0("high_risk_activities_", ip)]] == "0" &
+          dat_clean[[paste0("contact_animals_", ip)]] == "0" &
+          dat_clean[[paste0("contact_objects_", ip)]] == "0" &
+          dat_clean[[paste0("contact_other_", ip)]] == "0"
+      ) &
+        (
           (
+            dat_clean[[paste0("vicinity_animals_", ip)]] == "0" &
+              dat_clean[[paste0("vicinity_objects_", ip)]] == "0" &
+              dat_clean[[paste0("vicinity_other_", ip)]] == "0"
+          ) |
             (
-              vicinity_animals_ip2 %in% c("1", "3") |
-                vicinity_objects_ip2 %in% c("1", "3") |
-                vicinity_other_ip2 %in% c("1", "3")
-            ) &
-              vicinity_ppe_ip2 == "1" &
-              vicinity_ppe_breach_ip2 == "0" &
-              vicinity_ppe_removal_ip2 == "1"
-          )
-      ) &
-      vicinity_exposure_time_ip2 == "0" ~ "Negligible Risk",
-    
-    TRUE ~ NA_character_
-  )
-)
+              (
+                dat_clean[[paste0("vicinity_animals_", ip)]] %in% c("1","3") |
+                  dat_clean[[paste0("vicinity_objects_", ip)]] %in% c("1","3") |
+                  dat_clean[[paste0("vicinity_other_", ip)]] %in% c("1","3")
+              ) &
+                dat_clean[[paste0("vicinity_ppe_", ip)]] == "1" &
+                dat_clean[[paste0("vicinity_ppe_breach_", ip)]] == "0" &
+                dat_clean[[paste0("vicinity_ppe_removal_", ip)]] == "1"
+            )
+        ) &
+        dat_clean[[paste0("vicinity_exposure_time_", ip)]] == "0" ~ "Negligible Risk",
+      
+      TRUE ~ NA_character_
+      
+    ))
+}
 
 # Check
 dat_clean %>%
