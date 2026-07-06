@@ -2,7 +2,6 @@
 # For symptom follow up
 
 # Load packages
-# Loading packagaes
 pacman::p_load(
   rio,           # to import data
   here,          # to locate files
@@ -55,7 +54,7 @@ redcap <- redcap %>%
 
 # Don't forget to check your data!
 redcap %>%
-  select(contains("date_ip1")) %>%
+  select(record_id, sms_consent, contains("date_ip1")) %>%
   view()
 
 # Cleaning further
@@ -66,9 +65,23 @@ contact_dat <- redcap %>%
     phone,
     contact_number,
     first_name, ## Note using first_name (PHO verified) instead of contact_name (provided by facility)
-    last_exposure_date_ip1,
-    last_exposure_date_ip2
-    # re-exposed self-report? create new date variable?
+    last_exposure_date_ip1, # This is last date of any exposure, helpful for SitReps
+    last_exposure_date_ip2,
+    high_risk_exposure_date_ip1, #This is last date of PHO assigned high risk exposure and is used for SMS filtering
+    high_risk_exposure_date_ip2
+  ) 
+
+# There are still multiple rows per individual
+contact_dat <- contact_dat %>%
+  arrange(record_id, desc(high_risk_exposure_date_ip1)) %>% # Sort with most recent exposure date/s first (might need checking per IP site)
+  # One row per individual and back fill from repeat instances
+  group_by(record_id) %>%
+  summarise(
+    across(everything(), ~ {
+      x <- .
+      if (all(is.na(x))) NA else x[which(!is.na(x))[1]]
+    }),
+    .groups = "drop"
   ) %>%
   filter(sms_consent == 1) # ensuring we only contact those who have consented for further SMS followup
 
@@ -86,7 +99,7 @@ contact_dat <- contact_dat %>%
 # REDCap unique survey link
 ## As per Work instructions Section 12.3 (a) update line below to reflect updated .csv ##
 ## remember to name the export '_fu_link' to avoid confusion ##
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-06-29_1453_fu_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-07-06_1612_fu_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -95,9 +108,9 @@ link_dat <- link_dat %>%
 
 # Merge data
 merged_data <- left_join(contact_dat, link_dat, by = "record_id") %>%
-  mutate(last_exposure_date_ip1 = as.Date(last_exposure_date_ip1),
-         last_exposure_date_ip2 = as.Date(last_exposure_date_ip2),
-         last_exposure_date_all =  pmax(last_exposure_date_ip1, last_exposure_date_ip2, na.rm = TRUE))
+  mutate(high_risk_exposure_date_ip1 = as.Date(high_risk_exposure_date_ip1),
+         high_risk_exposure_date_ip2 = as.Date(high_risk_exposure_date_ip2),
+         last_exposure_date_all =  pmax(high_risk_exposure_date_ip1, high_risk_exposure_date_ip2, na.rm = TRUE))
 
 # Filter to last high risk exposure in the last 10 days
 date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from today

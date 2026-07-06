@@ -1,7 +1,6 @@
 # Cleaning ahead of data analyses, bulk uploads and reporting
 
 # Load packages
-# Loading packagaes
 pacman::p_load(
   rio,           # to import data
   here,          # to locate files
@@ -46,7 +45,7 @@ dat_clean <- redcap
 
 for (ip in c("ip1", "ip2")) { # Add exposure site suffixes as required, ensure REDCap form is duplicated for new site before running
   
-  dat_clean[[paste0("exposure_risk_calculated_test_", ip)]] <-
+  dat_clean[[paste0("exposure_risk_calculated_", ip)]] <-
     with(dat_clean, case_when(
       
       # 🔴 HIGH RISK
@@ -123,7 +122,7 @@ for (ip in c("ip1", "ip2")) { # Add exposure site suffixes as required, ensure R
 
 # Check
 dat_clean %>%
-  select(record_id,  exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_assessment_ip2) %>%
+  select(record_id, exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_assessment_ip2) %>%
   view()
 
 # Export QA list of REDCap ID where exposure_risk_assessment_ip1 =! exposure_risk_calculated_ip1 for each IP to send to ops manager
@@ -168,6 +167,13 @@ dat_clean <- dat_clean %>%
     TRUE ~ NA_character_
   ))
 
+# Check
+dat_clean %>%
+  filter(!is.na(exposure_risk_assessment_ip1)) %>%
+  select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2, exposure_risk_calculated_all) %>%
+  view()
+
+
 # Last exposure date
 dat_clean <- dat_clean %>%
   mutate(
@@ -196,11 +202,6 @@ dat_clean <- dat_clean %>%
     .groups = "drop"
   )
 
-## TODO
-# Confirmed cases variable?
-  # exposure_ip1_yn exposure_ip2_yn == 1
-  # test_results == 2 or == 3 
-
 # QA export
 dat_qa_risk <- dat_clean %>%
   filter(exposure_risk_qa_ip1 == "Risk assessment mismatch" | exposure_risk_qa_ip2 == "Risk assessment mismatch") %>%
@@ -209,5 +210,3 @@ dat_qa_risk <- dat_clean %>%
          exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2)
 
 write.csv(dat_qa_risk, file = here::here("outputs", paste0("dat_qa_risk_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
-
-##BHS comment: Coming up blank, ?validating checks for risk assessments? 
