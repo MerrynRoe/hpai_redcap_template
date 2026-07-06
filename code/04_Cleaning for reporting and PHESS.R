@@ -10,13 +10,7 @@ pacman::p_load(
   ggplot2
 )
 
-# RedCap data from exports
-
-# REDCap contact data
-# Import REDCap case list
-
-# Using API
-#!/usr/bin/env Rscript
+# Import updated REDCap data from API or adapt to be from a recent export
 
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
 formData <- list("token"=keyring::key_get("hpai_redcap_token"),
@@ -43,10 +37,10 @@ date_vars <- redcap %>%
 redcap <- redcap %>%
   mutate(across(all_of(date_vars), as.Date))
 
-# Calculate risk levels
-# exposure_risk_calculated_ip1, 
+# Calculates risk levels and creates following variables:
+# exposure_risk_calculated_ip1, exposure_risk_calculated_ip2 
 # exposure_risk_calculated_all
-## Note - requires form to be completed (no 'missing') values. PHOs can enter 'unsure' if info is not available.
+## NOTE - assumes completed risk surveys have no true 'missing' values. PHOs can enter 'unsure' if info is not available.
 
 dat_clean <- redcap
 

@@ -29,11 +29,6 @@ bulk_upload <- dat_clean %>%
   # Format var names to match DH template
   rename_with(toupper)
 
-## TODO
-# Filter out already uploaded cases???? Check with DH - on Q list
-# Filter out incomplete cases?
-
-
 
 # Export for DH 
 

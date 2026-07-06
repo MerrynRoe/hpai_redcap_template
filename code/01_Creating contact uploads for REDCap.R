@@ -12,22 +12,17 @@ pacman::p_load(
 )
 
 # Import caselist - ensure most upto date version
+## As per Work instructions Section 11.2 (a) update line below to reflect the name of your new import .csv ##
 dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_upload_20260421.csv"))
 
-##BHS Comment: What is this caselist? Where is it derived from/how is it generated? Where in the work instructions indicate it's generation in the raw_data folder? Perhaps we can generate a more robust naming structure
-
-# Import REDCap case list
-
-# Using Keyring to store APIs - run the line below just once per machine, re-hash out after run to allow for easy re-runs
+# Set up the Keyring to store your API
+## As per Work instructions Section 9 - see how to set up your API keyring for safe API handling##
+# Run the line below just once per machine, add a hash '#' to start of line after it has been run for the first time
 keyring::key_set("hpai_redcap_token")
 
-##BHS comment: Might need to spell out this step. It asks for a password but the user wouldn't know what to do here. 
-
-# Using API
-#!/usr/bin/env Rscript
-##BHS comment: What is this doing? 
-
-url <- "https://redcap.gvhealth.org.au/redcap/api/" ##BHS comment: If this is templated, might be good for some comments here to direct to respective REDCap server 
+# Import updated REDCap data from API or adapt to be from a recent export
+## As per Work instructions Section 9.4 update line below to reflect url for your REDCap server ##
+url <- "https://redcap.gvhealth.org.au/redcap/api/" 
 formData <- list("token"=keyring::key_get("hpai_redcap_token"),
                  content='record',
                  action='export',
@@ -112,6 +107,7 @@ dat_contacts_facility_ip1_new <- dat_contacts_facility_ip1_new %>%
   ) %>%
   mutate(contact_name = str_to_title(contact_name)) %>%   # Capitalise first letter
   mutate(email = case_when(
+    ## As per Work instructions Section 11.2 (B) update line/S below to reflect the default email you'd like to use ##
     is.na(email) ~ "PHUepi.analytics@gvhealth.org.au", # email can't be missing to get a unique link, using EPI email as default
     email == "" ~ "PHUepi.analytics@gvhealth.org.au",
     !is.na(email) ~ email
