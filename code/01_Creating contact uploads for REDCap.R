@@ -66,7 +66,7 @@ max_id <- if (length(redcap$record_id) == 0 || all(is.na(redcap$record_id))) {
 # Match on key fields, ie first name and mobile number
 
 dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
-  mutate(case_list_ip1_yn = 1) %>% ### Create contact list flag, ensure variable is updated per facility ###
+  mutate(contact_list_ip1_yn  = 1) %>% ### Create contact list flag, ensure variable is updated per facility ###
   mutate(
     contact_number = phone %>%
       str_remove_all("[^0-9]") %>%          # remove spaces, +, brackets, etc.
