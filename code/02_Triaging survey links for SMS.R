@@ -1,6 +1,6 @@
 # Merging the unique links and contact details from RedCap to input to SMS messaging system
-# For traige survey
-# Ensure facility case list has been processed and uploaded to REDCap as per 01_...
+# For triage survey
+# Ensure facility case list has been processed and uploaded to REDCap as per Set up work instructions section 11
 
 # Load packages
 # Loading packagaes
@@ -12,14 +12,7 @@ pacman::p_load(
   ggplot2
 )
 
-# RedCap data from exports
-
-# REDCap contact data
-# Import REDCap case list
-
-
-# Using API
-#!/usr/bin/env Rscript
+# Import updated REDCap data from API or adapt to be from a recent export
 
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
 formData <- list("token"=keyring::key_get("hpai_redcap_token"),
@@ -45,15 +38,12 @@ contact_dat <- redcap %>%
     contact_number,
     contact_name, 
     exposure_ip1_yn, 
-    exposure_ip2_yn
-    # re-exposed self-report? create new date variable?
-  ) #%>%
-  #filter(sms_consent != 0 | is.na(sms_consent)) %>%
-  #filter(!is.na(first_name))
+    exposure_ip2_yn)
 
-# REDCap unique survey link
-# Download from survey distribution tools, ensure it is the correct survey and you add '_triage_link' to doc name to avoid confusion
-link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagement_Participants_2026-04-21_1742_triage_link.csv")) # Update with most recent version
+# Import REDCap unique survey link
+## As per Work instructions Section 11.8 (a) update line below to reflect the name of your new import .csv ##
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-06-29_1419_triage_link.csv")) # Update with most recent version
+
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -64,14 +54,14 @@ link_dat <- link_dat %>%
 merged_data <- left_join(contact_dat, link_dat, by = "record_id")
 
 
-# Filter to send triage out if any triage exposure Qs are missing, this should capture when we create new site/exposures
-# Final essendex list
+# Filter to send triage out if any triage exposure Qs are missing
+## As per Work instructions Section 11.8 (b) update chunk below to reflect format required for your SMS system ##
 
 genesis <- merged_data %>%
-  #filter(is.na(exposure_ip1_yn) | is.na(exposure_ip2_yn)) %>% # Use this when second IP included
+  #filter(is.na(exposure_ip1_yn) | is.na(exposure_ip2_yn)) %>% # Use this when second IP included and expand as additional IPs added
   filter(is.na(exposure_ip1_yn)) %>%
   select(contact_name, contact_number, survey_link) %>%
-  mutate(contact_number = paste0("+", contact_number)) %>% # Format phone number for essendex
+  mutate(contact_number = paste0("+", contact_number)) %>% # Format phone number for genesis
   filter(contact_number != "+NA") %>%
   mutate(contact_name = str_to_title(contact_name))
 
@@ -79,4 +69,3 @@ genesis <- merged_data %>%
 ### Note if you open this excel sheet the contact number formatting breaks - check in R not in excel ### 
 
 write.csv(genesis, file = here::here("outputs", paste0("sms_list_triage_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
-
