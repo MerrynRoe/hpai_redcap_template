@@ -5,7 +5,7 @@ source(here::here("code", "04_cleaning for reporting and PHESS.R"))
 # Select key variables
 
 bulk_upload <- dat_clean %>%
-  select(first_name, middle_name, last_name, birth_date, sex,
+  select(record_id, first_name, middle_name, last_name, birth_date, sex,
          address_street, address_suburb_town, address_state, postcode, contact_number, exposure_risk_calculated_all, exposure_ip1_yn, exposure_ip2_yn) %>%
   # Create rows required for bulk uploads
   mutate(AVIAN_INFLUENZA_IN_HUMANS = "Avian Influenza in humans",
@@ -21,11 +21,22 @@ bulk_upload <- dat_clean %>%
          EXPOSED = "EXPOSED",
          CONTACT_RISK_ASSESSMENT = exposure_risk_calculated_all,
          LINKED_TO_AN_OUTBREAK = "YES",
-         LINKED_TO_AN_OUTBREAK_SPECIFY = "12345678910" ### Update to PHESS outbreak ID ###
+         LINKED_TO_AN_OUTBREAK_SPECIFY = "12345678910", ### Update to PHESS outbreak ID ###
+         OTHER_REFERENCES = paste0("REDCap Record ID: ",record_id)
   ) %>%
   # Filter out cases triaged out
   filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
   select(-exposure_risk_calculated_all) %>%
+  # Filter out incomplete cases
+  filter(!is.na(exposure_risk_calculated_all) # Keep only those with complete minimum data
+         & !is.na(first_name)
+         & !is.na(last_name)
+         & !is.na(birth_date)
+         & !is.na(sex)
+         & !is.na(address_street)
+         & !is.na(postcode)
+         & !is.na(contact_number)
+         ) 
   # Format var names to match DH template
   rename_with(toupper)
 
