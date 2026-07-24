@@ -2,6 +2,35 @@
 
 source(here::here("code", "04_cleaning for reporting and PHESS.R"))
 
+# Find all previous bulk uploads
+## IMPORTANT! Ensure any "phess_bulk_upload_".csv's in this folder that have NOT 
+## been bulk uploaded to PHESS are moved to another folder structure or deleted
+
+previous_files <- list.files(
+  here::here("outputs"),
+  pattern = "^phess_bulk_upload_\\d{8}.*\\.csv$",
+  full.names = TRUE
+)
+
+# Extract previously uploaded record_ids
+previous_record_ids <-
+  if (length(previous_files) == 0) {
+    character(0)
+  } else {
+    previous_files %>%
+      map_dfr(
+        ~ read_csv(.x, col_types = cols(.default = col_character()))
+      ) %>%
+      mutate(
+        record_id = str_remove(
+          OTHER_REFERENCES,
+          "^REDCap Record ID: "
+        )
+      ) %>%
+      pull(record_id) %>%
+      unique()
+  }
+
 # Select key variables
 
 bulk_upload <- dat_clean %>%
