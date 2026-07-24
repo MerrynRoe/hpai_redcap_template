@@ -53,9 +53,10 @@ bulk_upload <- dat_clean %>%
          LINKED_TO_AN_OUTBREAK_SPECIFY = "12345678910", ### Update to PHESS outbreak ID ###
          OTHER_REFERENCES = paste0("REDCap Record ID: ",record_id)
   ) %>%
+  # Filter out cases already uploaded
+  filter(!record_id %in% previous_record_ids) %>%
   # Filter out cases triaged out
   filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
-  select(-exposure_risk_calculated_all) %>%
   # Filter out incomplete cases
   filter(!is.na(exposure_risk_calculated_all) # Keep only those with complete minimum data
          & !is.na(first_name)
@@ -65,12 +66,24 @@ bulk_upload <- dat_clean %>%
          & !is.na(address_street)
          & !is.na(postcode)
          & !is.na(contact_number)
-         ) 
+         ) %>%
+  select(-exposure_risk_calculated_all) %>%
   # Format var names to match DH template
   rename_with(toupper)
 
 
 # Export for DH 
+
+  message(
+    nrow(bulk_upload),
+    " new records will be exported (",
+    length(previous_record_ids),
+    " previously uploaded records skipped)."
+  )
+  
+  if (nrow(bulk_upload) == 0) {
+    stop("No new records to upload.")
+  }
 
 write.csv(bulk_upload, file = here::here("outputs", paste0("phess_bulk_upload_", format(Sys.time(), "%Y%m%d"), ".csv")), 
           row.names = FALSE,
