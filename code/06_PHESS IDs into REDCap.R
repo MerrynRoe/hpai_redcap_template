@@ -28,7 +28,8 @@ pacman::p_load(
 )
 
 ### 1. INPUT DATA
-txt.filename <- "1784176123268_AvianInfluenzaOutbreakContacts1TEST_result.txt"   # adjust filename of input
+# Ensure .txt report is saved in the 'raw_data' folder with appropriate versiona controlled naming convention
+txt.filename <- "1784176123268_AvianInfluenzaOutbreakContacts1TEST_result.txt"   # adjust filename of input as required
 txt.line.vector  <- readLines(here("Inputs",txt.filename), warn = FALSE)
 
 ### 2. EXTRACT FIELDS
@@ -55,6 +56,6 @@ ROSTER_IMPORT_CASE_LIST <- data.frame(
 ROSTER_IMPORT_CASE_LIST <- ROSTER_IMPORT_CASE_LIST[!is.na(df$EVENT_ID), ]   # drop non-matching lines
 
 # --- export ---
-output.file <- here("Outputs", paste0("Roster import event name links ", format(Sys.Date(), "%d%m%Y"), ".csv"))
+output.file <- here("outputs", paste0("PHESS import event name links ", format(Sys.Date(), "%d%m%Y"), ".csv"))
 
 write.csv(ROSTER_IMPORT_CASE_LIST, output.file, row.names = FALSE)
