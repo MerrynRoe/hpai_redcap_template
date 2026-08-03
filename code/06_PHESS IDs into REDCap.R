@@ -3,13 +3,18 @@
 # Code written by Alex Fidao (alexander.fidao@health.vic.gov.au)
 
 ################################################################################### 
+##### Roster import output convert code for uploading PHESSIDs to REDCap     ##### 
+################################################################################### 
+### Code to read in the .txt roster import 'results' file and outputs           ###
+### a csv with a list of the created PHESS IDs, with their first and last name. ###
+################################################################################### 
 #                                                                                 #
 # The .txt roster import 'results' file contains                                  #
-# a list of the PHESS IDs created by the 'roster import', with first name         #
-# and last name. The .txt results file is dirty, with a lot of other              #
+# a list of the PHESS IDs created by the roster import, with first name           #
+# and last name. The .txt results file is dirty though, with a lot of other       #
 # text that needs to be ignored.                                                  #
 #                                                                                 #
-# As discussed this code can be replaced with a PHAR code that just looks up      #
+# As discussed this code can be replaces with a PHAR code that just looks up      #
 # cases linked to the relevent outbreak (if the .txt file is first used to link   #
 # the newly created cases to their Outbreak) or to the OTHER_REFERENCES           #
 # field, if we can get it added to the roster import template, which can contain  #
@@ -28,9 +33,8 @@ pacman::p_load(
 )
 
 ### 1. INPUT DATA
-# Ensure .txt report is saved in the 'raw_data' folder with appropriate versiona controlled naming convention
-txt.filename <- "1784176123268_AvianInfluenzaOutbreakContacts1TEST_result.txt"   # adjust filename of input as required
-txt.line.vector  <- readLines(here("Inputs",txt.filename), warn = FALSE)
+txt.filename <- "1784176123268_AvianInfluenzaOutbreakContacts1TEST_result.txt"   # adjust filename of input
+txt.line.vector  <- readLines(here("raw_data",txt.filename), warn = FALSE)
 
 ### 2. EXTRACT FIELDS
 
@@ -48,14 +52,17 @@ match.matrix <- str_match(txt.line.vector, string.pattern)
 
 # convert match.matrix to a DF:
 ROSTER_IMPORT_CASE_LIST <- data.frame(
-  EVENT_ID   = m[, 2],
-  FIRST_NAME = m[, 3],
-  LAST_NAME  = str_trim(m[, 4]),
+  EVENT_ID   = match.matrix[, 2],
+  FIRST_NAME = match.matrix[, 3],
+  LAST_NAME  = str_trim(match.matrix[, 4]),
   stringsAsFactors = FALSE
 )
-ROSTER_IMPORT_CASE_LIST <- ROSTER_IMPORT_CASE_LIST[!is.na(df$EVENT_ID), ]   # drop non-matching lines
 
-# --- export ---
+ROSTER_IMPORT_CASE_LIST <- ROSTER_IMPORT_CASE_LIST[!is.na(ROSTER_IMPORT_CASE_LIST$EVENT_ID), ]   # drop non-matching lines
+
+## Left join with existing minimum dataset - see Jade's WI for vars needed
+
+## Export ready for REDCap import
 output.file <- here("outputs", paste0("PHESS import event name links ", format(Sys.Date(), "%d%m%Y"), ".csv"))
 
 write.csv(ROSTER_IMPORT_CASE_LIST, output.file, row.names = FALSE)
