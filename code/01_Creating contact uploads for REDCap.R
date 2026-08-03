@@ -105,8 +105,10 @@ dat_contacts_facility_ip1_new <- dat_contacts_facility_ip1_new %>%
       record_id
     )
   ) %>%
-  mutate(contact_name = str_to_title(contact_name)) %>%   # Capitalise first letter
-  mutate(email = case_when(
+  mutate(
+    contact_name = str_to_title(contact_name),   # Capitalise first letter
+    contact_upload_date = format(Sys.Date(), "%d-%m-%Y"), # Used for PHESS bulk upload event_date
+    email = case_when(
     ## As per Work instructions Section 11.2 (B) update line/S below to reflect the default email you'd like to use ##
     is.na(email) ~ "PHUepi.analytics@gvhealth.org.au", # email can't be missing to get a unique link, using EPI email as default
     email == "" ~ "PHUepi.analytics@gvhealth.org.au",
@@ -122,5 +124,3 @@ write.csv(
   here::here("outputs", paste0(timestamp, "_import_to_redcap_for_triage.csv")),
   row.names = FALSE
 )
-
-##BHS comment: All looks to be working
