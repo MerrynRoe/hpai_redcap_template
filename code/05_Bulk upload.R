@@ -35,14 +35,14 @@ previous_record_ids <-
 
 bulk_upload <- dat_clean %>%
   select(record_id, first_name, middle_name, last_name, birth_date, sex,
-         address_street, address_suburb_town, address_state, postcode, contact_number, exposure_risk_calculated_all, exposure_ip1_yn, exposure_ip2_yn) %>%
+         address_street, address_suburb_town, address_state, postcode, contact_number, exposure_risk_calculated_all, exposure_ip1_yn, exposure_ip2_yn, contact_upload_date) %>%
   # Clean state = "VIC/QLD", gender/sex = "MALE/FEMALE"
   mutate(
     sex = case_when(
       sex == 1 ~ "MALE",
       sex == 2 ~ "FEMALE",
       sex == 3 ~ "OTHER",
-      #sex == 4 ~ "Not Stated", # Will be listed as missing check ok with DQ team
+      #sex == 4 ~ "Not Stated", # Will be listed as missing
       TRUE ~ NA_character_
     ),
     address_state = case_when(
@@ -59,7 +59,7 @@ bulk_upload <- dat_clean %>%
     exposure_risk_calculated_all = case_when(
       exposure_risk_calculated_all == "High Risk" ~ "HIGH",
       exposure_risk_calculated_all == "Low Risk" ~ "LOW",
-      # OTHER
+      # exposure_risk_calculated_all == OTHER is a bulk upload option if needed
       TRUE ~ "NOT_ASSIGNED"
     )
   ) %>%
@@ -72,20 +72,20 @@ bulk_upload <- dat_clean %>%
          CONTACT = "CONTACT",
          O = "O", # Outbreak
          EXPOSED = "EXPOSED",
-         CONTACT_RISK_ASSESSMENT = exposure_risk_calculated_all, # 'HIGH' / not 'high risk'
+         CONTACT_RISK_ASSESSMENT = exposure_risk_calculated_all, 
          YES = "YES", # LINKED_TO_AN_OUTBREAK
          `Is the case linked to an outbreak of Avian Influenza in humans` = "12345678910", ### Update to PHESS outbreak ID ###
          AUSTRALIA = "Australia",
          HOME_CONTACT = NA,
-         #OTHER_REFERENCES = paste0("REDCap Record ID: ",record_id), ## Add back in when Bulk upload allows, will make linking easier
-         DATE_RECEIVED = as.Date('2026-08-01') ### Think about the date to put here ? date of contact upload
+         #OTHER_REFERENCES = paste0("REDCap Record ID: ",record_id), ## Add back in when Bulk upload allows, will make linking easier PHESS IDs back into REDCap in script 06
+         DATE_RECEIVED = contact_upload_date ## Date contact first uploaded to REDCap
   ) %>%
   # Filter out cases already uploaded
   filter(!record_id %in% previous_record_ids) %>%
   # Filter out cases triaged out
   filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
   # Filter out incomplete cases
-  filter(!is.na(exposure_risk_calculated_all) # Keep only those with complete minimum data
+  filter(!is.na(exposure_risk_calculated_all) # Keep only those with complete minimum data, remove this whole filter step for final upload at end of incident
          & !is.na(first_name)
          & !is.na(last_name)
          & !is.na(birth_date)
@@ -94,10 +94,10 @@ bulk_upload <- dat_clean %>%
          & !is.na(postcode)
          & !is.na(contact_number)
          ) %>%
-  select(-exposure_risk_calculated_all, - record_id, -exposure_ip1_yn, -exposure_ip2_yn) %>%
+  select(-exposure_risk_calculated_all, - record_id, -exposure_ip1_yn, -exposure_ip2_yn, -contact_upload_date) %>%
   # Format var names to match DH template
   select(first_name, middle_name, last_name, birth_date, sex,
-         address_street, address_suburb_town, address_state, postcode, AUSTRALIA, HOME_CONTACT, contact_number, everything()) %>%
+         address_street, address_suburb_town, address_state, postcode, AUSTRALIA, HOME_CONTACT, contact_number, everything(), DATE_RECEIVED) %>%
   rename_with(toupper)
 
 
