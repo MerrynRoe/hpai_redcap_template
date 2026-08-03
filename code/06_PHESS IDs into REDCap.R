@@ -60,9 +60,83 @@ ROSTER_IMPORT_CASE_LIST <- data.frame(
 
 ROSTER_IMPORT_CASE_LIST <- ROSTER_IMPORT_CASE_LIST[!is.na(ROSTER_IMPORT_CASE_LIST$EVENT_ID), ]   # drop non-matching lines
 
-## Left join with existing minimum dataset - see Jade's WI for vars needed
+### 3. Left join with existing minimum dataset
+## TODO - add mobile / contact number in for better matching specificity? ##
+
+## Run REDCap cleaning for most upto date REDCap data
+source(here::here("code", "04_cleaning for reporting and PHESS.R"))
+
+## Check for any First / Last name duplicates in both datasets
+# Ensure duplicates are removed from data sources (REDCap / PHESS) before progressing
+ROSTER_IMPORT_CASE_LIST %>%
+  count(FIRST_NAME, LAST_NAME) %>%
+  filter(n > 1)
+
+dat_clean %>%
+  count(first_name, last_name) %>%
+  filter(n > 1)
+
+## Clean name text for better matching
+
+dat_clean_joined <- dat_clean %>%
+  mutate(
+    first_name_join = str_to_upper(str_trim(first_name)),
+    last_name_join  = str_to_upper(str_trim(last_name))
+  ) %>%
+  left_join(
+    ROSTER_IMPORT_CASE_LIST %>%
+      mutate(
+        FIRST_NAME_JOIN = str_to_upper(str_trim(FIRST_NAME)),
+        LAST_NAME_JOIN  = str_to_upper(str_trim(LAST_NAME))
+      ),
+    by = c(
+      "first_name_join" = "FIRST_NAME_JOIN",
+      "last_name_join"  = "LAST_NAME_JOIN"
+    )
+  ) %>%
+  select(-first_name_join, -last_name_join)
+
+## TODO - check if alert message appropriate for any non-join events?? ##
+unmatched_phess <- ROSTER_IMPORT_CASE_LIST %>%
+  mutate(
+    FIRST_NAME_JOIN = str_to_upper(str_trim(FIRST_NAME)),
+    LAST_NAME_JOIN  = str_to_upper(str_trim(LAST_NAME))
+  ) %>%
+  left_join(
+    dat_clean %>%
+      mutate(
+        first_name_join = str_to_upper(str_trim(first_name)),
+        last_name_join  = str_to_upper(str_trim(last_name))
+      ),
+    by = c(
+       "FIRST_NAME_JOIN" = "first_name_join",
+       "LAST_NAME_JOIN" = "last_name_join"
+    )
+  ) %>%
+  select(-FIRST_NAME_JOIN, -LAST_NAME_JOIN)
+
+if (nrow(unmatched_phess) > 0) {
+  
+  warning(
+    paste0(
+      nrow(unmatched_phess),
+      " record(s) from PHESS could not be matched to REDCap. ",
+      "Please review the following names:\n",
+      paste(
+        paste(unmatched_phess$FIRST_NAME, unmatched_phess$LAST_NAME),
+        collapse = "\n"
+      )
+    ),
+    call. = FALSE
+  )
+  
+} else {
+  
+  message("✓ All PHESS records were successfully matched to REDCap.")
+  
+}
 
 ## Export ready for REDCap import
 output.file <- here("outputs", paste0("PHESS import event name links ", format(Sys.Date(), "%d%m%Y"), ".csv"))
 
-write.csv(ROSTER_IMPORT_CASE_LIST, output.file, row.names = FALSE)
+write.csv(dat_phess_id_to_redcap, output.file, row.names = FALSE)
