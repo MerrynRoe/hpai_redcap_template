@@ -139,4 +139,4 @@ if (nrow(unmatched_phess) > 0) {
 ## Export ready for REDCap import
 output.file <- here("outputs", paste0("PHESS import event name links ", format(Sys.Date(), "%d%m%Y"), ".csv"))
 
-write.csv(dat_phess_id_to_redcap, output.file, row.names = FALSE)
+write.csv(dat_clean_joined, output.file, row.names = FALSE)
