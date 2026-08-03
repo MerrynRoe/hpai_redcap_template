@@ -33,7 +33,7 @@ pacman::p_load(
 )
 
 ### 1. INPUT DATA
-txt.filename <- "1784176123268_AvianInfluenzaOutbreakContacts1TEST_result.txt"   # adjust filename of input
+txt.filename <- "1785736554240_phess_bulk_upload_20260803 V2_AF_result.txt"   # adjust filename of input
 txt.line.vector  <- readLines(here("raw_data",txt.filename), warn = FALSE)
 
 ### 2. EXTRACT FIELDS
@@ -42,7 +42,7 @@ txt.line.vector  <- readLines(here("raw_data",txt.filename), warn = FALSE)
 # 1. digits after "created new event"
 # 2. the first whitespace-free token after "created new person", and
 # 3. everything to end of line:
-string.pattern <- "created new event (\\d+) and created new person (\\S+)\\s+(.+)$"
+string.pattern <- "created new event (\\d+) and (?:created new person|modified existing person) (\\S+)\\s+(.+)$"
 
 ## str_match returns a character matrix match.matrix, with one row per input line:
 # col 1 (V1) returns the part of the line that matches the format in string.pattern IF there was a match
@@ -94,7 +94,8 @@ dat_clean_joined <- dat_clean %>%
       "last_name_join"  = "LAST_NAME_JOIN"
     )
   ) %>%
-  select(-first_name_join, -last_name_join)
+  mutate(phess_id = EVENT_ID) %>%
+  select(record_id, first_name, last_name, phess_id)
 
 ## TODO - check if alert message appropriate for any non-join events?? ##
 unmatched_phess <- ROSTER_IMPORT_CASE_LIST %>%
@@ -139,4 +140,9 @@ if (nrow(unmatched_phess) > 0) {
 ## Export ready for REDCap import
 output.file <- here("outputs", paste0("PHESS import event name links ", format(Sys.Date(), "%d%m%Y"), ".csv"))
 
-write.csv(dat_clean_joined, output.file, row.names = FALSE)
+write.csv(
+  dat_clean_joined,
+  output.file,
+  row.names = FALSE,
+  na = "" # Ensure 'NA' don't overwrite values
+)
