@@ -77,7 +77,7 @@ bulk_upload <- dat_clean %>%
          `Is the case linked to an outbreak of Avian Influenza in humans` = "12345678910", ### Update to PHESS outbreak ID ###
          AUSTRALIA = "Australia",
          HOME_CONTACT = NA,
-         OTHER_REFERENCES = paste0("REDCap Record ID: ",record_id),
+         #OTHER_REFERENCES = paste0("REDCap Record ID: ",record_id), ## Add back in when Bulk upload allows, will make linking easier
          DATE_RECEIVED = as.Date('2026-08-01') ### Think about the date to put here ? date of contact upload
   ) %>%
   # Filter out cases already uploaded
