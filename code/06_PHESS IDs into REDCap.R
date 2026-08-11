@@ -67,7 +67,7 @@ ROSTER_IMPORT_CASE_LIST <- ROSTER_IMPORT_CASE_LIST[!is.na(ROSTER_IMPORT_CASE_LIS
 source(here::here("code", "04_cleaning for reporting and PHESS.R"))
 
 ## Check for any First / Last name duplicates in both datasets
-# Ensure duplicates are removed from data sources (REDCap / PHESS) before progressing
+# # IMPORTANT ! Ensure duplicates are removed from data sources (REDCap / PHESS) before progressing
 ROSTER_IMPORT_CASE_LIST %>%
   count(FIRST_NAME, LAST_NAME) %>%
   filter(n > 1)
@@ -97,7 +97,7 @@ dat_clean_joined <- dat_clean %>%
   mutate(phess_id = EVENT_ID) %>%
   select(record_id, first_name, last_name, phess_id)
 
-## TODO - check if alert message appropriate for any non-join events?? ##
+# This section checks which entries did not have a PHESS ID in this report and will shoot a message with the diagnostic
 unmatched_phess <- ROSTER_IMPORT_CASE_LIST %>%
   mutate(
     FIRST_NAME_JOIN = str_to_upper(str_trim(FIRST_NAME)),
@@ -107,14 +107,17 @@ unmatched_phess <- ROSTER_IMPORT_CASE_LIST %>%
     dat_clean %>%
       mutate(
         first_name_join = str_to_upper(str_trim(first_name)),
-        last_name_join  = str_to_upper(str_trim(last_name))
-      ),
+        last_name_join  = str_to_upper(str_trim(last_name)),
+        MATCHED = TRUE
+      ) %>%
+      select(first_name_join, last_name_join, MATCHED),
     by = c(
-       "FIRST_NAME_JOIN" = "first_name_join",
-       "LAST_NAME_JOIN" = "last_name_join"
+      "FIRST_NAME_JOIN" = "first_name_join",
+      "LAST_NAME_JOIN"  = "last_name_join"
     )
   ) %>%
-  select(-FIRST_NAME_JOIN, -LAST_NAME_JOIN)
+  filter(is.na(MATCHED)) %>%
+  select(-FIRST_NAME_JOIN, -LAST_NAME_JOIN, -MATCHED)
 
 if (nrow(unmatched_phess) > 0) {
   

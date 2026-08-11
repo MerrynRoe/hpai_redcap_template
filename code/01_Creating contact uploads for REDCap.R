@@ -121,6 +121,6 @@ timestamp <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
 
 write.csv(
   dat_contacts_facility_ip1_new,
-  here::here("outputs", paste0(timestamp, "_import_to_redcap_for_triage.csv")),
+  here::here("outputs", paste0("import_to_redcap_for_triage_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")),
   row.names = FALSE
 )

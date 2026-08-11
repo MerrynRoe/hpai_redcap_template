@@ -209,4 +209,4 @@ dat_qa_risk <- dat_clean %>%
          exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, 
          exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2)
 
-write.csv(dat_qa_risk, file = here::here("outputs", paste0("dat_qa_risk_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
+write.csv(dat_qa_risk, file = here::here("outputs", paste0("dat_qa_risk_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")), row.names = FALSE)

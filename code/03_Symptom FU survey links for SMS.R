@@ -124,6 +124,6 @@ genesis <- merged_data %>%
 ## Export sheet ready for genesis
 ### Note if you open this excel sheet the contact number formatting breaks - check in R not in excel ### 
 
-write.csv(genesis, file = here::here("outputs", paste0("sms_list_sympt_fu_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
+write.csv(genesis, file = here::here("outputs", paste0("sms_list_sympt_fu_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")), row.names = FALSE)
 
 ##BHS comment: my output has no names popping up?
