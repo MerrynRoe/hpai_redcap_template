@@ -2,36 +2,118 @@
 
 source(here::here("code", "04_cleaning for reporting and PHESS.R"))
 
+# Find all previous bulk uploads
+## IMPORTANT! Ensure any "phess_bulk_upload_".csv's in this folder that have NOT 
+## been bulk uploaded to PHESS are moved to another folder structure or deleted
+
+previous_files <- list.files(
+  here::here("outputs"),
+  pattern = "^phess_bulk_upload_\\d{8}.*\\.csv$",
+  full.names = TRUE
+) 
+
+# Extract previously uploaded record_ids
+previous_record_ids <-
+  if (length(previous_files) == 0) {
+    character(0)
+  } else {
+    previous_files %>%
+      map_dfr(
+        ~ read_csv(.x, col_types = cols(.default = col_character()))
+      ) %>%
+      mutate(
+        record_id = str_remove(
+          `Other references`,
+          "^REDCap Record ID: "
+        )
+      ) %>%
+      pull(record_id) %>%
+      unique()
+  }
+
 # Select key variables
 
 bulk_upload <- dat_clean %>%
-  select(first_name, middle_name, last_name, birth_date, sex,
-         address_street, address_suburb_town, address_state, postcode, contact_number, exposure_risk_calculated_all, exposure_ip1_yn, exposure_ip2_yn) %>%
+  select(record_id, first_name, middle_name, last_name, birth_date, sex,
+         address_street, address_suburb_town, address_state, postcode, contact_number, exposure_risk_calculated_all, exposure_ip1_yn, exposure_ip2_yn, contact_upload_date) %>%
+  # Clean state = "VIC/QLD", gender/sex = "MALE/FEMALE"
+  mutate(
+    sex = case_when(
+      sex == 1 ~ "MALE",
+      sex == 2 ~ "FEMALE",
+      sex == 3 ~ "OTHER",
+      #sex == 4 ~ "Not Stated", # Will be listed as missing
+      TRUE ~ NA_character_
+    ),
+    address_state = case_when(
+      address_state == 1 ~ "VIC",
+      address_state == 2 ~ "NSW",
+      address_state == 3 ~ "TAS",
+      address_state == 4 ~ "QLD",
+      address_state == 5 ~ "WA",
+      address_state == 6 ~ "SA",
+      address_state == 7 ~ "ACT",
+      address_state == 8 ~ "NT",
+      TRUE ~ NA_character_
+    ),
+    exposure_risk_calculated_all = case_when(
+      exposure_risk_calculated_all == "High Risk" ~ "HIGH",
+      exposure_risk_calculated_all == "Low Risk" ~ "LOW",
+      # exposure_risk_calculated_all == OTHER is a bulk upload option if needed
+      TRUE ~ "NOT_ASSIGNED"
+    )
+  ) %>%
   # Create rows required for bulk uploads
-  mutate(AVIAN_INFLUENZA_IN_HUMANS = "Avian Influenza in humans",
-         INFLUENZA_A = "Influenza A",
-         A = "A",
+  mutate(A = "A", # A = alive may need updating
          UNKNOWN = "UNKNOWN",
          X = "X",
-         `1246` = "1246",
-         AT_RISK = "at risk",
+         `1057` = "1057", # The organism (?) code
+         AT_RISK = "AT_RISK",
          CONTACT = "CONTACT",
-         OUTBREAK = "OUTBREAK",
-         E = "E",
+         O = "O", # Outbreak
          EXPOSED = "EXPOSED",
-         CONTACT_RISK_ASSESSMENT = exposure_risk_calculated_all,
-         LINKED_TO_AN_OUTBREAK = "YES",
-         LINKED_TO_AN_OUTBREAK_SPECIFY = "12345678910" ### Update to PHESS outbreak ID ###
+         CONTACT_RISK_ASSESSMENT = exposure_risk_calculated_all, 
+         YES = "YES", # LINKED_TO_AN_OUTBREAK
+         `Is the case linked to an outbreak of Avian Influenza in humans` = "12345678910", ### Update to PHESS outbreak ID ###
+         AUSTRALIA = "Australia",
+         HOME_CONTACT = NA,
+         `Other references` = paste0("REDCap Record ID: ",record_id), ## Add back in when Bulk upload allows, will make linking easier PHESS IDs back into REDCap in script 06
+         DATE_RECEIVED = contact_upload_date ## Date contact first uploaded to REDCap
   ) %>%
+  # Filter out cases already uploaded
+  filter(!record_id %in% previous_record_ids) %>%
   # Filter out cases triaged out
   filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
-  select(-exposure_risk_calculated_all) %>%
+  # Filter out incomplete cases
+  ## 10 days since last exposure + completed PHA + completed interview data ##
+  ## Min 30 cases for bulk upload ##
+  filter(!is.na(exposure_risk_calculated_all) # Keep only those with complete minimum data, remove this whole filter step for final upload at end of incident
+         & !is.na(first_name)
+         & !is.na(last_name)
+         & !is.na(birth_date)
+         & !is.na(sex)
+         & !is.na(address_street)
+         & !is.na(postcode)
+         & !is.na(contact_number)
+         ) %>%
+  select(-exposure_risk_calculated_all, - record_id, -exposure_ip1_yn, -exposure_ip2_yn, -contact_upload_date) %>%
   # Format var names to match DH template
-  rename_with(toupper)
-
+  select(first_name, middle_name, last_name, birth_date, sex,
+         address_street, address_suburb_town, address_state, postcode, AUSTRALIA, HOME_CONTACT, contact_number, everything(), DATE_RECEIVED) 
 
 # Export for DH 
 
-write.csv(bulk_upload, file = here::here("outputs", paste0("phess_bulk_upload_", format(Sys.time(), "%Y%m%d"), ".csv")), 
+  message(
+    nrow(bulk_upload),
+    " new records will be exported (",
+    length(previous_record_ids),
+    " previously uploaded records skipped)."
+  )
+  
+  if (nrow(bulk_upload) == 0) {
+    stop("No new records to upload.")
+  }
+
+write.csv(bulk_upload, file = here::here("outputs", paste0("phess_bulk_upload_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")), 
           row.names = FALSE,
           na = "")

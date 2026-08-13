@@ -42,7 +42,7 @@ contact_dat <- redcap %>%
 
 # Import REDCap unique survey link
 ## As per Work instructions Section 11.8 (a) update line below to reflect the name of your new import .csv ##
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-06-29_1419_triage_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-03-26_1130_triage_link.csv")) # Update with most recent version
 
 
 link_dat <- link_dat %>%
@@ -68,4 +68,4 @@ genesis <- merged_data %>%
 ## Export sheet ready for genesis
 ### Note if you open this excel sheet the contact number formatting breaks - check in R not in excel ### 
 
-write.csv(genesis, file = here::here("outputs", paste0("sms_list_triage_", format(Sys.time(), "%Y%m%d"), ".csv")), row.names = FALSE)
+write.csv(genesis, file = here::here("outputs", paste0("sms_list_triage_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")), row.names = FALSE)
