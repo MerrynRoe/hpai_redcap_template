@@ -18,7 +18,7 @@ dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_up
 # Set up the Keyring to store your API
 ## As per Work instructions Section 9 - see how to set up your API keyring for safe API handling##
 # Run the line below just once per machine, add a hash '#' to start of line after it has been run for the first time
-#keyring::key_set("hpai_redcap_token")
+keyring::key_set("hpai_redcap_token")
 
 # Import updated REDCap data from API or adapt to be from a recent export
 ## As per Work instructions Section 9.4 update line below to reflect url for your REDCap server ##
