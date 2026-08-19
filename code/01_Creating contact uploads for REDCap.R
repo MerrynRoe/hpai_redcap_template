@@ -18,7 +18,7 @@ dat_contacts_facility_ip1 <- read.csv(here::here("raw_data", "test_AI_contact_up
 # Set up the Keyring to store your API
 ## As per Work instructions Section 9 - see how to set up your API keyring for safe API handling##
 # Run the line below just once per machine, add a hash '#' to start of line after it has been run for the first time
-keyring::key_set("hpai_redcap_token")
+#keyring::key_set("hpai_redcap_token")
 
 # Import updated REDCap data from API or adapt to be from a recent export
 ## As per Work instructions Section 9.4 update line below to reflect url for your REDCap server ##
@@ -107,7 +107,7 @@ dat_contacts_facility_ip1_new <- dat_contacts_facility_ip1_new %>%
   ) %>%
   mutate(
     contact_name = str_to_title(contact_name),   # Capitalise first letter
-    contact_upload_date = format(Sys.Date(), "%d-%m-%Y"), # Used for PHESS bulk upload event_date
+    contact_upload_date = format(Sys.Date(), "%d/%m/%Y"), # Used for PHESS bulk upload event_date
     email = case_when(
     ## As per Work instructions Section 11.2 (B) update line/S below to reflect the default email you'd like to use ##
     is.na(email) ~ "PHUepi.analytics@gvhealth.org.au", # email can't be missing to get a unique link, using EPI email as default
