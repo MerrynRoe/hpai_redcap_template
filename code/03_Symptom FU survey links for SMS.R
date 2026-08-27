@@ -99,7 +99,7 @@ contact_dat <- contact_dat %>%
 # REDCap unique survey link
 ## As per Work instructions Section 12.3 (a) update line below to reflect updated .csv ##
 ## remember to name the export '_fu_link' to avoid confusion ##
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-07-06_1612_fu_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagement_Participants_2026-08-24_0947_fu_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -126,4 +126,3 @@ genesis <- merged_data %>%
 
 write.csv(genesis, file = here::here("outputs", paste0("sms_list_sympt_fu_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")), row.names = FALSE)
 
-##BHS comment: my output has no names popping up?
