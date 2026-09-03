@@ -42,12 +42,41 @@ redcap <- redcap %>%
   rowwise() %>%
   mutate(
     last_exposure_date_ip1 = {
-      vals <- c_across(contains("date_ip1"))
-      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
+      vals <- c_across(
+        contains("date_ip1") &
+          !contains("startdate_ip1") &
+          !contains("enddate_ip1") &
+          !contains("triage_startdate_ip1") &
+          !contains("triage_enddate_ip1")
+      )
+      end_date <- c_across(contains("enddate_ip1"))
+      
+      if (!all(is.na(vals))) {
+        max(vals, na.rm = TRUE)
+      } else if (!all(is.na(end_date))) {
+        max(end_date, na.rm = TRUE)
+      } else {
+        NA
+      }
     },
+    
     last_exposure_date_ip2 = {
-      vals <- c_across(contains("date_ip2"))
-      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
+      vals <- c_across(
+        contains("date_ip2") &
+          !contains("startdate_ip2") &
+          !contains("enddate_ip2") &
+          !contains("triage_startdate_ip2") &
+          !contains("triage_enddate_ip2")
+      )
+      end_date <- c_across(contains("enddate_ip2"))
+      
+      if (!all(is.na(vals))) {
+        max(vals, na.rm = TRUE)
+      } else if (!all(is.na(end_date))) {
+        max(end_date, na.rm = TRUE)
+      } else {
+        NA
+      }
     }
   ) %>%
   ungroup()
