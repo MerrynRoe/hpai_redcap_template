@@ -65,6 +65,7 @@ contact_dat <- redcap %>%
     phone,
     contact_number,
     first_name, ## Note using first_name (PHO verified) instead of contact_name (provided by facility)
+    contact_name,
     last_exposure_date_ip1, # This is last date of any exposure, helpful for SitReps
     last_exposure_date_ip2,
     high_risk_exposure_date_ip1, #This is last date of PHO assigned high risk exposure and is used for SMS filtering
@@ -99,7 +100,7 @@ contact_dat <- contact_dat %>%
 # REDCap unique survey link
 ## As per Work instructions Section 12.3 (a) update line below to reflect updated .csv ##
 ## remember to name the export '_fu_link' to avoid confusion ##
-link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagement_Participants_2026-08-24_0947_fu_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagementSept2026_Participants_2026-09-03_1108_fu_link.csv")) # Update with most recent version
 
 link_dat <- link_dat %>%
   clean_names() %>%
@@ -116,6 +117,10 @@ merged_data <- left_join(contact_dat, link_dat, by = "record_id") %>%
 date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from today
 
 genesis <- merged_data %>%
+  mutate(last_exposure_date_all = case_when(
+    is.na(last_exposure_date_all) ~ last_exposure_date_ip1,
+    TRUE ~ last_exposure_date_all
+  )) %>%
   filter(last_exposure_date_all >= date_10_days_ago) %>% # Filter based on the 10 day cutoff defined above
   select(first_name, contact_number, survey_link) %>%
   mutate(contact_number = paste0("+", contact_number))%>% # Format phone number for genesis
