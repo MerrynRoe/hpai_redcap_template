@@ -1,3 +1,6 @@
+# Version: 1.1
+# Date of last update: 20/8/2026
+
 # Importing facility contact lists and matching to existing REDCap IDs
 
 # Load packages

@@ -1,3 +1,6 @@
+# Version: 1.1
+# Date of last update: 20/8/2026
+
 # Merging the unique links and contact details from RedCap to input to SMS messaging system
 # For triage survey
 # Ensure facility case list has been processed and uploaded to REDCap as per Set up work instructions section 11

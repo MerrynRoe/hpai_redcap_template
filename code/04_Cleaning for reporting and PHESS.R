@@ -1,3 +1,6 @@
+# Version: 1.1
+# Date of last update: 20/8/2026
+
 # Cleaning ahead of data analyses, bulk uploads and reporting
 
 # Load packages

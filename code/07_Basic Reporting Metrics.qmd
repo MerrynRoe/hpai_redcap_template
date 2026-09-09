@@ -28,6 +28,9 @@ execute:
 #| message: false
 #| warning: false
 
+# Version: 1.1
+# Date of last update: 20/8/2026
+
 pacman::p_load(tidyverse,
                janitor,
                here,

@@ -1,3 +1,6 @@
+# Version: 1.1
+# Date of last update: 20/8/2026
+
 # Merging the unique links and contact details from RedCap to input to SMS messaging system
 # For symptom follow up
 
