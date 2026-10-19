@@ -1,5 +1,5 @@
-# Version: 1.1
-# Date of last update: 20/8/2026
+# Version: 2.0
+# Date of last update: 19/10/2026
 
 # Merging the unique links and contact details from RedCap to input to SMS messaging system
 # For triage survey
@@ -37,15 +37,13 @@ redcap <- httr::content(response)
 contact_dat <- redcap %>%
   select(
     record_id,
-    sms_consent,
-    contact_number,
-    contact_name, 
-    exposure_ip1_yn, 
-    exposure_ip2_yn)
+    phone_contact_list,
+    first_name_contact_list, 
+    triage_yn_ip1) # Add other triage ip sites as needed
 
 # Import REDCap unique survey link
 ## As per Work instructions Section 11.8 (a) update line below to reflect the name of your new import .csv ##
-link_dat <- read.csv(here::here("raw_data", "HPAISurvey_Participants_2026-03-26_1130_triage_link.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "DRAFTHPAIRevisedScope151026_Participants_2026-10-19_1708.csv")) # Update with most recent version
 
 
 link_dat <- link_dat %>%
@@ -61,12 +59,12 @@ merged_data <- left_join(contact_dat, link_dat, by = "record_id")
 ## As per Work instructions Section 11.8 (b) update chunk below to reflect format required for your SMS system ##
 
 genesis <- merged_data %>%
-  #filter(is.na(exposure_ip1_yn) | is.na(exposure_ip2_yn)) %>% # Use this when second IP included and expand as additional IPs added
-  filter(is.na(exposure_ip1_yn)) %>%
-  select(contact_name, contact_number, survey_link) %>%
-  mutate(contact_number = paste0("+", contact_number)) %>% # Format phone number for genesis
+  #filter(is.na(triage_yn_ip1) | is.na(triage_yn_ip2)) %>% # Use this when second IP included and expand as additional IPs added
+  filter(is.na(triage_yn_ip1)) %>%
+  select(first_name_contact_list, phone_contact_list, survey_link) %>%
+  mutate(contact_number = paste0("+", phone_contact_list)) %>% # Format phone number for genesis
   filter(contact_number != "+NA") %>%
-  mutate(contact_name = str_to_title(contact_name))
+  mutate(contact_name = str_to_title(first_name_contact_list))
 
 ## Export sheet ready for genesis
 ### Note if you open this excel sheet the contact number formatting breaks - check in R not in excel ### 
