@@ -67,8 +67,7 @@ for (ip in c("ip1", "ip2")) {
           (
             dat_clean[[paste0("exposure_indoors_no_contact_", ip)]] %in% c("1", "2") &
               dat_clean[[paste0("exposure_indoors_duration_", ip)]] == "0" # Indoor exposure <15min
-          )
-          
+          ) |
           dat_clean[[paste0("exposure_outdoors_no_contact_", ip)]] %in% c("1", "2")
       ) ~ "Low Risk",
       
