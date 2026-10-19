@@ -1,0 +1,5 @@
+# Require MerrynRoe to review all repository files
+* @MerrynRoe @BrandonHenleySmith @jadesoren
+
+# Protect the ownership rules themselves
+/.github/CODEOWNERS @MerrynRoe
