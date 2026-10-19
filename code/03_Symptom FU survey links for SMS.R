@@ -1,8 +1,10 @@
-# Version: 1.1
-# Date of last update: 20/8/2026
+# Version: 2.0
+# Date of last update: 19/10/2026
 
 # Merging the unique links and contact details from RedCap to input to SMS messaging system
 # For symptom follow up
+
+# TODO: We need to calculate risk before running this script. Bring 04 script forward?
 
 # Load packages
 pacman::p_load(
