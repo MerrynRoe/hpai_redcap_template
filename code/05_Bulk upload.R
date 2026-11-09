@@ -3,11 +3,11 @@
 
 # Pulling all vars required for DH bulk upload template + formatting
 
-source(here::here("code", "04_cleaning for reporting and PHESS.R"))
+source(here::here("code", "03_cleaning for reporting and PHESS.R"))
 
 # Find all previous bulk uploads
-## IMPORTANT! Ensure any "phess_bulk_upload_".csv's in this folder that have NOT 
-## been bulk uploaded to PHESS are moved to another folder structure or deleted
+## IMPORTANT! Ensure any "phess_bulk_upload_".csv's in this folder that have NOT ##
+## been bulk uploaded to PHESS are moved to another folder structure or deleted ##
 
 previous_files <- list.files(
   here::here("outputs"),
@@ -34,29 +34,54 @@ previous_record_ids <-
       unique()
   }
 
-# Select key variables
+
+# Initialise variables from IP1
+dat_clean <- dat_clean %>%
+  mutate(
+    birth_date = birth_date_ip1,
+    sex = sex_ip1,
+    postcode = postcode_ip1
+  )
+
+# Reconcile across IP sites
+for (ip in ip_sites) {
+  
+  dat_clean <- dat_clean %>%
+    mutate(
+        first_name = coalesce(
+          na_if(.data[[paste0("first_name_", ip)]], ""),
+          first_name_contact_list
+        ),
+        last_name = coalesce(
+          na_if(.data[[paste0("last_name_", ip)]], ""),
+          last_name_contact_list
+        ),
+      birth_date = coalesce(
+        birth_date,
+        .data[[paste0("birth_date_", ip)]]
+      ),
+      sex = coalesce(
+        sex,
+        .data[[paste0("sex_", ip)]]
+      ),
+      postcode = coalesce(
+        postcode,
+        .data[[paste0("postcode_", ip)]]
+      )
+    )
+}
+
 
 bulk_upload <- dat_clean %>%
-  select(record_id, first_name, middle_name, last_name, birth_date, sex,
-         address_street, address_suburb_town, address_state, postcode, contact_number, exposure_risk_calculated_all, exposure_ip1_yn, exposure_ip2_yn, contact_upload_date) %>%
+  select(record_id, first_name, first_name_contact_list, last_name, last_name_contact_list, birth_date, sex,
+        postcode, phone_contact_list, contact_upload_date, contains("triage_yn_ip"), contains("exposure_risk_calculated_")) %>%
   # Clean state = "VIC/QLD", gender/sex = "MALE/FEMALE"
   mutate(
     sex = case_when(
       sex == 1 ~ "MALE",
-      sex == 2 ~ "FEMALE",
-      sex == 3 ~ "OTHER",
+      sex == 0 ~ "FEMALE",
+      sex == 99 ~ "OTHER",
       #sex == 4 ~ "Not Stated", # Will be listed as missing
-      TRUE ~ NA_character_
-    ),
-    address_state = case_when(
-      address_state == 1 ~ "VIC",
-      address_state == 2 ~ "NSW",
-      address_state == 3 ~ "TAS",
-      address_state == 4 ~ "QLD",
-      address_state == 5 ~ "WA",
-      address_state == 6 ~ "SA",
-      address_state == 7 ~ "ACT",
-      address_state == 8 ~ "NT",
       TRUE ~ NA_character_
     ),
     exposure_risk_calculated_all = case_when(
@@ -64,8 +89,48 @@ bulk_upload <- dat_clean %>%
       exposure_risk_calculated_all == "Low Risk" ~ "LOW",
       # exposure_risk_calculated_all == OTHER is a bulk upload option if needed
       TRUE ~ "NOT_ASSIGNED"
-    )
-  ) %>%
+    ),
+    postcode_num = as.integer(stringr::str_pad(
+      as.character(postcode),
+      width = 4,
+      side = "left",
+      pad = "0"
+    )),
+    
+    address_state = case_when(
+      # ACT
+      between(postcode_num, 200, 299) |
+        between(postcode_num, 2600, 2618) |
+        between(postcode_num, 2900, 2920) ~ "ACT",
+      
+      # NSW
+      between(postcode_num, 1000, 2599) |
+        between(postcode_num, 2619, 2899) |
+        between(postcode_num, 2921, 2999) ~ "NSW",
+      
+      # VIC
+      between(postcode_num, 3000, 3999) |
+        between(postcode_num, 8000, 8999) ~ "VIC",
+      
+      # QLD
+      between(postcode_num, 4000, 4999) |
+        between(postcode_num, 9000, 9999) ~ "QLD",
+      
+      # SA
+      between(postcode_num, 5000, 5999) ~ "SA",
+      
+      # WA
+      between(postcode_num, 6000, 6999) ~ "WA",
+      
+      # TAS
+      between(postcode_num, 7000, 7999) ~ "TAS",
+      
+      # NT
+      between(postcode_num, 800, 999) ~ "NT",
+      
+      TRUE ~ NA_character_
+    )) %>%
+  select(-postcode_num) %>%
   # Create rows required for bulk uploads
   mutate(A = "A", # A = alive may need updating
          UNKNOWN = "UNKNOWN",
@@ -85,8 +150,8 @@ bulk_upload <- dat_clean %>%
   ) %>%
   # Filter out cases already uploaded
   filter(!record_id %in% previous_record_ids) %>%
-  # Filter out cases triaged out
-  filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
+  # Filter - only keep people with any triage = Yes
+  filter(if_any(starts_with("triage_yn_ip"), ~ .x == 1)) %>%
   # Filter out incomplete cases
   ## 10 days since last exposure + completed PHA + completed interview data ##
   ## Min 30 cases for bulk upload ##
@@ -95,14 +160,13 @@ bulk_upload <- dat_clean %>%
          & !is.na(last_name)
          & !is.na(birth_date)
          & !is.na(sex)
-         & !is.na(address_street)
          & !is.na(postcode)
-         & !is.na(contact_number)
+         & !is.na(phone_contact_list)
          ) %>%
-  select(-exposure_risk_calculated_all, - record_id, -exposure_ip1_yn, -exposure_ip2_yn, -contact_upload_date) %>%
+  select(-exposure_risk_calculated_all, - record_id, -contains("triage_yn_ip"), -contact_upload_date) %>%
   # Format var names to match DH template
-  select(first_name, middle_name, last_name, birth_date, sex,
-         address_street, address_suburb_town, address_state, postcode, AUSTRALIA, HOME_CONTACT, contact_number, everything(), DATE_RECEIVED) 
+  select(first_name, last_name, birth_date, sex,
+         address_state, postcode, AUSTRALIA, HOME_CONTACT, phone_contact_list, everything(), DATE_RECEIVED) 
 
 # Export for DH 
 
