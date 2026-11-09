@@ -4,8 +4,6 @@
 # Merging the unique links and contact details from RedCap to input to SMS messaging system
 # For symptom follow up
 
-# TODO: We need to calculate risk before running this script. Bring 04 script forward?
-
 # Load packages
 pacman::p_load(
   rio,           # to import data
@@ -15,100 +13,30 @@ pacman::p_load(
   ggplot2
 )
 
-# Import updated REDCap data from API or adapt to be from a recent export
+# Run previous cleaning
+source(here::here("code", "03_Cleaning for reporting and PHESS.R"))
 
-url <- "https://redcap.gvhealth.org.au/redcap/api/"
-formData <- list("token"=keyring::key_get("hpai_redcap_token"),
-                 content='record',
-                 action='export',
-                 format='csv',
-                 type='flat',
-                 csvDelimiter='',
-                 rawOrLabel='raw',
-                 rawOrLabelHeaders='raw',
-                 exportCheckboxLabel='false',
-                 exportSurveyFields='true',
-                 exportDataAccessGroups='false',
-                 returnFormat='json'
-)
-response <- httr::POST(url, body = formData, encode = "form")
-redcap <- httr::content(response)
-
-# Clean all date variables
-date_vars <- redcap %>%
-  select(contains("date"), - email_updated) %>%
-  names()
-
-redcap <- redcap %>%
-  mutate(across(all_of(date_vars), as.Date))
-
-# Calculate date_last_exposure for each ip
-redcap <- redcap %>%
-  rowwise() %>%
-  mutate(
-    last_exposure_date_ip1 = {
-      vals <- c_across(
-        contains("date_ip1") &
-          !contains("startdate_ip1") &
-          !contains("enddate_ip1") &
-          !contains("triage_startdate_ip1") &
-          !contains("triage_enddate_ip1")
-      )
-      end_date <- c_across(contains("enddate_ip1"))
-      
-      if (!all(is.na(vals))) {
-        max(vals, na.rm = TRUE)
-      } else if (!all(is.na(end_date))) {
-        max(end_date, na.rm = TRUE)
-      } else {
-        NA
-      }
-    },
-    
-    last_exposure_date_ip2 = {
-      vals <- c_across(
-        contains("date_ip2") &
-          !contains("startdate_ip2") &
-          !contains("enddate_ip2") &
-          !contains("triage_startdate_ip2") &
-          !contains("triage_enddate_ip2")
-      )
-      end_date <- c_across(contains("enddate_ip2"))
-      
-      if (!all(is.na(vals))) {
-        max(vals, na.rm = TRUE)
-      } else if (!all(is.na(end_date))) {
-        max(end_date, na.rm = TRUE)
-      } else {
-        NA
-      }
-    }
-  ) %>%
-  ungroup()
 
 # Don't forget to check your data!
-redcap %>%
-  select(record_id, sms_consent, contains("date_ip1")) %>%
+dat_clean %>%
+  #select(record_id, sms_consent, contains("exposure_date")) %>%
   view()
 
 # Cleaning further
-contact_dat <- redcap %>%
+contact_dat <- dat_clean %>%
   select(
     record_id,
-    sms_consent,
-    phone,
-    contact_number,
-    first_name, ## Note using first_name (PHO verified) instead of contact_name (provided by facility)
-    contact_name,
-    last_exposure_date_ip1, # This is last date of any exposure, helpful for SitReps
-    last_exposure_date_ip2,
-    high_risk_exposure_date_ip1, #This is last date of PHO assigned high risk exposure and is used for SMS filtering
-    high_risk_exposure_date_ip2
+    #sms_consent,
+    phone_contact_list,
+    first_name_contact_list, ## Note using name from contact list
+    last_name_contact_list,
+    exposure_date_ip1, # This is last date of IP1 exposure, helpful for SitReps
+    last_exposure_date_all # This is last date of any exposure accross IP sites
   ) 
 
 # There are still multiple rows per individual
 contact_dat <- contact_dat %>%
-  arrange(record_id, desc(high_risk_exposure_date_ip1)) %>% # Sort with most recent exposure date/s first (might need checking per IP site)
+  arrange(record_id, desc(last_exposure_date_all)) %>% # Sort with most recent exposure date/s first (might need checking per IP site)
   # One row per individual and back fill from repeat instances
   group_by(record_id) %>%
   summarise(
@@ -117,19 +45,14 @@ contact_dat <- contact_dat %>%
       if (all(is.na(x))) NA else x[which(!is.na(x))[1]]
     }),
     .groups = "drop"
-  ) %>%
-  filter(sms_consent == 1) # ensuring we only contact those who have consented for further SMS followup
+  ) #%>%
+  #filter(sms_consent == 1) # ensuring we only contact those who have consented for further SMS followup
 
-# Use new PHO verified phone number, if missing revert back to original contact number
+# Renaming phone var
 contact_dat <- contact_dat %>%
-  mutate(phone = as.character(phone),
-         contact_number = as.character(contact_number)) %>%
-  mutate(contact_number = case_when(
-    !is.na(phone) ~ phone,
-    is.na(phone) ~ contact_number,
-    TRUE ~ NA
-  )) %>%
-  select(-phone)
+  mutate(contact_number = as.character(phone_contact_list),
+         first_name = first_name_contact_list) %>%
+  select(-phone_contact_list, first_name_contact_list)
 
 # REDCap unique survey link
 ## As per Work instructions Section 12.3 (a) update line below to reflect updated .csv ##
@@ -143,18 +66,14 @@ link_dat <- link_dat %>%
 
 # Merge data
 merged_data <- left_join(contact_dat, link_dat, by = "record_id") %>%
-  mutate(high_risk_exposure_date_ip1 = as.Date(high_risk_exposure_date_ip1),
-         high_risk_exposure_date_ip2 = as.Date(high_risk_exposure_date_ip2),
-         last_exposure_date_all =  pmax(high_risk_exposure_date_ip1, high_risk_exposure_date_ip2, na.rm = TRUE))
+  mutate(exposure_date_ip1 = as.Date(exposure_date_ip1),
+         #exposure_date_ip2 = as.Date(exposure_date_ip2),
+         last_exposure_date_all =  as.Date(last_exposure_date_all))
 
 # Filter to last high risk exposure in the last 10 days
-date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from today
+date_10_days_ago <- Sys.Date() - 10 # Calculate the date 10 days ago from 'today' day of run
 
 genesis <- merged_data %>%
-  mutate(last_exposure_date_all = case_when(
-    is.na(last_exposure_date_all) ~ last_exposure_date_ip1,
-    TRUE ~ last_exposure_date_all
-  )) %>%
   filter(last_exposure_date_all >= date_10_days_ago) %>% # Filter based on the 10 day cutoff defined above
   select(first_name, contact_number, survey_link) %>%
   mutate(contact_number = paste0("+", contact_number))%>% # Format phone number for genesis
