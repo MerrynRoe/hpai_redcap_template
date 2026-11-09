@@ -49,9 +49,9 @@ dat_clean <- redcap
 for (ip in c("ip1", "ip2")) {
   
   dat_clean[[paste0("exposure_risk_calculated_", ip)]] <-
-    with(dat_clean, case_when(
+    case_when(
       
-      # 🔴 HIGH RISK
+      # 🔴 HIGH RISK = Direct contact OR enclosed space >15min
       (
         dat_clean[[paste0("exposure_bird_contact_", ip)]] %in% c("1", "2") |
           dat_clean[[paste0("exposure_product_contact_", ip)]] %in% c("1", "2") |
@@ -62,29 +62,23 @@ for (ip in c("ip1", "ip2")) {
           )
       ) ~ "High Risk",
       
-      # 🟠 LOW RISK
+      # 🟠 LOW RISK = Indoor exposure <=15min
       (
-          (
-            dat_clean[[paste0("exposure_indoors_no_contact_", ip)]] %in% c("1", "2") &
-              dat_clean[[paste0("exposure_indoors_duration_", ip)]] == "0" # Indoor exposure <15min
-          ) |
-          dat_clean[[paste0("exposure_outdoors_no_contact_", ip)]] %in% c("1", "2")
+        dat_clean[[paste0("exposure_indoors_no_contact_", ip)]] %in% c("1", "2") &
+          dat_clean[[paste0("exposure_indoors_duration_", ip)]] == "0"
       ) ~ "Low Risk",
       
-      # 🟢 NEGLIGIBLE RISK
-      
+      # 🟢 NEGLIGIBLE RISK = No reported exposure
       (
         dat_clean[[paste0("exposure_bird_contact_", ip)]] == "0" &
-        dat_clean[[paste0("exposure_product_contact_", ip)]] == "0" &
-        dat_clean[[paste0("exposure_cleaning_contact_", ip)]] == "0" &
-        dat_clean[[paste0("exposure_indoors_no_contact_", ip)]] == "0" &
-        dat_clean[[paste0("exposure_outdoors_no_contact_", ip)]]== "0"
-          
-          ) ~ "Negligible Risk",
+          dat_clean[[paste0("exposure_product_contact_", ip)]] == "0" &
+          dat_clean[[paste0("exposure_cleaning_contact_", ip)]] == "0" &
+          dat_clean[[paste0("exposure_indoors_no_contact_", ip)]] == "0" &
+          dat_clean[[paste0("exposure_outdoors_no_contact_", ip)]] == "0"
+      ) ~ "Negligible Risk",
       
       TRUE ~ NA_character_
-      
-    ))
+    )
 }
 
 # Check
