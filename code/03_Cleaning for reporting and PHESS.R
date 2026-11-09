@@ -12,6 +12,10 @@ pacman::p_load(
   ggplot2
 )
 
+# Define IP sites, this will be used from here on in loops
+#ip_sites <- c("ip1", "ip2")
+ip_sites <- c("ip1")
+
 # Import updated REDCap data from API or adapt to be from a recent export
 
 url <- "https://redcap.gvhealth.org.au/redcap/api/"
@@ -40,13 +44,13 @@ redcap <- redcap %>%
   mutate(across(all_of(date_vars), as.Date))
 
 # Calculates risk levels and creates following variables:
-# exposure_risk_calculated_ip1, exposure_risk_calculated_ip2 
+# exposure_risk_calculated_ip1, exposure_risk_calculated_ipX 
 # exposure_risk_calculated_all
 ## NOTE - assumes completed risk surveys have no true 'missing' values. PHOs can enter 'unsure' if info is not available.
 
 dat_clean <- redcap # Create a clean dataset before starting loop for risk assessment
 
-for (ip in c("ip1", "ip2")) {
+for (ip in ip_sites) {
   
   dat_clean[[paste0("exposure_risk_calculated_", ip)]] <-
     case_when(
@@ -87,19 +91,19 @@ dat_clean %>%
   view()
 
 # Add high level risk assessment
-# TODO: Currently not running as we only have ip1 in template
-# dat_clean <- dat_clean %>%
-#   mutate(exposure_risk_calculated_all = case_when(
-#     exposure_risk_calculated_ip1 == "High Risk" | exposure_risk_calculated_ip2 == "High Risk" ~ "High Risk",
-#     exposure_risk_calculated_ip1 == "Low Risk" | exposure_risk_calculated_ip2 == "Low Risk" ~ "Low Risk",
-#     exposure_risk_calculated_ip1 == "Negligible Risk" | exposure_risk_calculated_ip2 == "Negligible Risk" ~ "Negligible Risk",
-#     TRUE ~ NA_character_
-#   ))
+dat_clean <- dat_clean %>%
+  mutate(
+    exposure_risk_calculated_all = case_when(
+      if_any(starts_with("exposure_risk_calculated_ip"), ~ .x == "High Risk") ~ "High Risk",
+      if_any(starts_with("exposure_risk_calculated_ip"), ~ .x == "Low Risk") ~ "Low Risk",
+      if_any(starts_with("exposure_risk_calculated_ip"), ~ .x == "Negligible Risk") ~ "Negligible Risk",
+      TRUE ~ NA_character_
+    ))
 
 # Check
 dat_clean %>%
   filter(!is.na(exposure_risk_calculated_ip1)) %>%
-  select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2, exposure_risk_calculated_all) %>%
+  select(record_id, first_name_contact_list, contains("exposure_risk_calculated_ip"), exposure_risk_calculated_all) %>%
   view()
 
 
@@ -128,3 +132,4 @@ dat_clean <- dat_clean %>%
     }),
     .groups = "drop"
   )
+
