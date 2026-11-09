@@ -86,51 +86,19 @@ dat_clean %>%
   select(record_id, exposure_risk_calculated_ip1) %>%
   view()
 
-# Export QA list of REDCap ID where exposure_risk_assessment_ip1 =! exposure_risk_calculated_ip1 for each IP to send to ops manager
-dat_clean <- dat_clean %>%
-  mutate(
-    exposure_risk_qa_ip1 = case_when(
-      exposure_risk_assessment_ip1 == 0 & exposure_risk_calculated_ip1 != "High Risk" ~ "Risk assessment mismatch",
-      exposure_risk_assessment_ip1 == 1 & exposure_risk_calculated_ip1 != "Low Risk" ~ "Risk assessment mismatch",
-      exposure_risk_assessment_ip1 == 2 & exposure_risk_calculated_ip1 != "Negligible Risk" ~ "Risk assessment mismatch",
-      TRUE ~ NA_character_
-  ),
-    exposure_risk_qa_ip2 = case_when(
-      exposure_risk_assessment_ip2 == 0 & exposure_risk_calculated_ip2 != "High Risk" ~ "Risk assessment mismatch",
-      exposure_risk_assessment_ip2 == 1 & exposure_risk_calculated_ip2 != "Low Risk" ~ "Risk assessment mismatch",
-      exposure_risk_assessment_ip2 == 2 & exposure_risk_calculated_ip2 != "Negligible Risk" ~ "Risk assessment mismatch",
-      TRUE ~ NA_character_
-  )) %>%
-  # Adding labels to REDCap 'PHO assigned' risk
-  mutate(
-    across(
-      c(exposure_risk_assessment_ip1, exposure_risk_assessment_ip2),
-      ~ factor(.,
-               levels = c(0, 1, 2),
-               labels = c("High Level Exposure",
-                          "Low Level Exposure",
-                          "Negligible Level Exposure"))
-    )
-  )
-
-# Check
-dat_clean %>%
-  filter(!is.na(exposure_risk_assessment_ip1)) %>%
-  select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
-  view()
-
 # Add high level risk assessment
-dat_clean <- dat_clean %>%
-  mutate(exposure_risk_calculated_all = case_when(
-    exposure_risk_calculated_ip1 == "High Risk" | exposure_risk_calculated_ip2 == "High Risk" ~ "High Risk",
-    exposure_risk_calculated_ip1 == "Low Risk" | exposure_risk_calculated_ip2 == "Low Risk" ~ "Low Risk",
-    exposure_risk_calculated_ip1 == "Negligible Risk" | exposure_risk_calculated_ip2 == "Negligible Risk" ~ "Negligible Risk",
-    TRUE ~ NA_character_
-  ))
+# TODO: Currently not running as we only have ip1 in template
+# dat_clean <- dat_clean %>%
+#   mutate(exposure_risk_calculated_all = case_when(
+#     exposure_risk_calculated_ip1 == "High Risk" | exposure_risk_calculated_ip2 == "High Risk" ~ "High Risk",
+#     exposure_risk_calculated_ip1 == "Low Risk" | exposure_risk_calculated_ip2 == "Low Risk" ~ "Low Risk",
+#     exposure_risk_calculated_ip1 == "Negligible Risk" | exposure_risk_calculated_ip2 == "Negligible Risk" ~ "Negligible Risk",
+#     TRUE ~ NA_character_
+#   ))
 
 # Check
 dat_clean %>%
-  filter(!is.na(exposure_risk_assessment_ip1)) %>%
+  filter(!is.na(exposure_risk_calculated_ip1)) %>%
   select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2, exposure_risk_calculated_all) %>%
   view()
 
@@ -138,19 +106,17 @@ dat_clean %>%
 # Last exposure date
 dat_clean <- dat_clean %>%
   mutate(
-    last_exposure_date_ip1 = {
-      vals <- c_across(contains("date_ip1"))
-      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
-    },
-    last_exposure_date_ip2 = {
-      vals <- c_across(contains("date_ip2"))
-      if (all(is.na(vals))) NA else max(vals, na.rm = TRUE)
-    }
-  ) %>%
-  ungroup() %>%
-  mutate(last_exposure_date_ip1 = as.Date(last_exposure_date_ip1),
-         last_exposure_date_ip2 = as.Date(last_exposure_date_ip2),
-         last_exposure_date_all =  pmax(last_exposure_date_ip1, last_exposure_date_ip2, na.rm = TRUE))
+    last_exposure_date_all = purrr::reduce(
+      dplyr::select(., starts_with("exposure_date_ip")) %>% # Selects any 'last_exposure_date_ipX' variable
+        as.list(), # Creates a list of all per individual
+      ~ pmax(.x, .y, na.rm = TRUE) # Selects the most recent
+    ),
+    last_exposure_date_all = if_else(
+      is.infinite(last_exposure_date_all), # If all were missing (pmax produces 'Inf'), change to date formatted 'missing'
+      contact_upload_date, # If last exposure date unknown, use date of contact
+      last_exposure_date_all
+    )
+  )
 
 # One row per individual and back fill from repeat instances
 dat_clean <- dat_clean %>%
@@ -162,12 +128,3 @@ dat_clean <- dat_clean %>%
     }),
     .groups = "drop"
   )
-
-# QA export
-dat_qa_risk <- dat_clean %>%
-  filter(exposure_risk_qa_ip1 == "Risk assessment mismatch" | exposure_risk_qa_ip2 == "Risk assessment mismatch") %>%
-  select(record_id, first_name, phone, pho_name, 
-         exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, 
-         exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2)
-
-write.csv(dat_qa_risk, file = here::here("outputs", paste0("dat_qa_risk_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")), row.names = FALSE)
