@@ -1,5 +1,5 @@
 # Version: 2.0
-# Date of last update: 19/10/2026
+# Date of last update: 9/11/2026
 
 # Cleaning ahead of data analyses, bulk uploads and reporting
 
@@ -44,7 +44,7 @@ redcap <- redcap %>%
 # exposure_risk_calculated_all
 ## NOTE - assumes completed risk surveys have no true 'missing' values. PHOs can enter 'unsure' if info is not available.
 
-dat_clean <- redcap
+dat_clean <- redcap # Create a clean dataset before starting loop for risk assessment
 
 for (ip in c("ip1", "ip2")) {
   
@@ -83,7 +83,7 @@ for (ip in c("ip1", "ip2")) {
 
 # Check
 dat_clean %>%
-  select(record_id, exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_assessment_ip2) %>%
+  select(record_id, exposure_risk_calculated_ip1) %>%
   view()
 
 # Export QA list of REDCap ID where exposure_risk_assessment_ip1 =! exposure_risk_calculated_ip1 for each IP to send to ops manager
