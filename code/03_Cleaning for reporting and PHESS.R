@@ -1,5 +1,5 @@
 # Version: 2.0
-# Date of last update: 9/11/2026
+# Date of last update: 17/11/2026
 
 # Cleaning ahead of data analyses, bulk uploads and reporting
 
@@ -77,8 +77,7 @@ for (ip in ip_sites) {
         dat_clean[[paste0("exposure_bird_contact_", ip)]] == "0" &
           dat_clean[[paste0("exposure_product_contact_", ip)]] == "0" &
           dat_clean[[paste0("exposure_cleaning_contact_", ip)]] == "0" &
-          dat_clean[[paste0("exposure_indoors_no_contact_", ip)]] == "0" &
-          dat_clean[[paste0("exposure_outdoors_no_contact_", ip)]] == "0"
+          dat_clean[[paste0("exposure_indoors_no_contact_", ip)]] == "0"
       ) ~ "Negligible Risk",
       
       TRUE ~ NA_character_
