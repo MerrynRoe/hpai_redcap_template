@@ -106,6 +106,25 @@ dat_clean %>%
   view()
 
 
+# Create a QA list of REDCap ID where exposure_risk_assessment_ip1 =! exposure_risk_calculated_ip1 for each IP 
+# Use this to check the REDCap calculation matches the R calculation
+# Inbuilt redundancy
+dat_clean <- dat_clean %>%
+  mutate(
+    exposure_risk_qa_ip1 = case_when(
+      exposure_risk_label_ip1 == "High risk" & exposure_risk_calculated_ip1 != "High Risk" ~ "Risk assessment mismatch",
+      exposure_risk_label_ip1 == "Low risk" & exposure_risk_calculated_ip1 != "Low Risk" ~ "Risk assessment mismatch",
+      exposure_risk_label_ip1 == "Negligible risk" & exposure_risk_calculated_ip1 != "Negligible Risk" ~ "Risk assessment mismatch",
+      TRUE ~ NA_character_
+    )) 
+
+# Check
+dat_clean %>%
+  filter(!is.na(exposure_risk_assessment_ip1)) %>%
+  select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
+  view()
+
+
 # Last exposure date
 dat_clean <- dat_clean %>%
   mutate(
