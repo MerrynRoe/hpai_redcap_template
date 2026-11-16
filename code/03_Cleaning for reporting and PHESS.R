@@ -109,14 +109,46 @@ dat_clean %>%
 # Create a QA list of REDCap ID where exposure_risk_assessment_ip1 =! exposure_risk_calculated_ip1 for each IP 
 # Use this to check the REDCap calculation matches the R calculation
 # Inbuilt redundancy
-dat_clean <- dat_clean %>%
-  mutate(
-    exposure_risk_qa_ip1 = case_when(
-      exposure_risk_label_ip1 == "High risk" & exposure_risk_calculated_ip1 != "High Risk" ~ "Risk assessment mismatch",
-      exposure_risk_label_ip1 == "Low risk" & exposure_risk_calculated_ip1 != "Low Risk" ~ "Risk assessment mismatch",
-      exposure_risk_label_ip1 == "Negligible risk" & exposure_risk_calculated_ip1 != "Negligible Risk" ~ "Risk assessment mismatch",
-      TRUE ~ NA_character_
-    )) 
+for (ip in ip_sites) {
+  
+  dat_clean[[paste0("exposure_risk_qa_", ip)]] <- case_when(
+    
+    dat_clean[[paste0("exposure_risk_label_", ip)]] == "High risk" &
+      dat_clean[[paste0("exposure_risk_calculated_", ip)]] != "High Risk" ~
+      "Risk assessment mismatch",
+    
+    dat_clean[[paste0("exposure_risk_label_", ip)]] == "Low risk" &
+      dat_clean[[paste0("exposure_risk_calculated_", ip)]] != "Low Risk" ~
+      "Risk assessment mismatch",
+    
+    dat_clean[[paste0("exposure_risk_label_", ip)]] == "Negligible risk" &
+      dat_clean[[paste0("exposure_risk_calculated_", ip)]] != "Negligible Risk" ~
+      "Risk assessment mismatch",
+    
+    TRUE ~ NA_character_
+  )
+}
+
+# Check for any mis-matches
+exposure_risk_qa <- bind_rows(
+  lapply(ip_sites, function(ip) {
+    
+    dat_clean %>%
+      filter(
+        !is.na(.data[[paste0("exposure_risk_qa_", ip)]])
+      ) %>%
+      transmute(
+        record_id,
+        ip_site = ip,
+        risk_label = .data[[paste0("exposure_risk_label_", ip)]],
+        risk_calculated = .data[[paste0("exposure_risk_calculated_", ip)]],
+        qa_result = .data[[paste0("exposure_risk_qa_", ip)]]
+      )
+    
+  })
+)
+
+exposure_risk_qa
 
 # Check
 dat_clean %>%
