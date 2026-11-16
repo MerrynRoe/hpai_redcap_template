@@ -13,8 +13,8 @@ pacman::p_load(
 )
 
 # Define IP sites, this will be used from here on in loops
-#ip_sites <- c("ip1", "ip2")
-ip_sites <- c("ip1")
+#ip_sites <- c("ip1", "ip2", "ipN") 
+ip_sites <- c("ip1") # Make sure you update this line whenever you add an IP site, see example above for syntax
 
 # Import updated REDCap data from API or adapt to be from a recent export
 
