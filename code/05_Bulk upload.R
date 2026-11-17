@@ -1,4 +1,4 @@
-# Version: 1.1
+# Version: 2
 # Date of last update: 20/8/2026
 
 # Pulling all vars required for DH bulk upload template + formatting

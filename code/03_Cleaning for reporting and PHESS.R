@@ -1,5 +1,5 @@
 # Version: 2.0
-# Date of last update: 17/11/2026
+# Date of last update: 18/11/2026
 
 # Cleaning ahead of data analyses, bulk uploads and reporting
 
@@ -14,7 +14,7 @@ pacman::p_load(
 
 # Define IP sites, this will be used from here on in loops
 #ip_sites <- c("ip1", "ip2", "ipN") 
-ip_sites <- c("ip1") # Make sure you update this line whenever you add an IP site, see example above for syntax
+ip_sites <- c("ip1", "ip2") # Make sure you update this line whenever you add an IP site, see example above for syntax
 
 # Import updated REDCap data from API or adapt to be from a recent export
 
@@ -86,7 +86,7 @@ for (ip in ip_sites) {
 
 # Check
 dat_clean %>%
-  select(record_id, exposure_risk_calculated_ip1) %>%
+  select(record_id, exposure_risk_calculated_ip1, exposure_risk_label_ip1) %>%
   view()
 
 # Add high level risk assessment
@@ -106,7 +106,7 @@ dat_clean %>%
   view()
 
 
-# Create a QA list of REDCap ID where exposure_risk_assessment_ip1 =! exposure_risk_calculated_ip1 for each IP 
+# Create a QA list of REDCap ID where exposure_risk_label_ip1 =! exposure_risk_calculated_ip1 for each IP 
 # Use this to check the REDCap calculation matches the R calculation
 # Inbuilt redundancy
 for (ip in ip_sites) {
@@ -130,6 +130,14 @@ for (ip in ip_sites) {
 }
 
 # Check for any mis-matches
+dat_clean <- dat_clean %>%
+  mutate(
+    across(
+      all_of(paste0("exposure_risk_label_", ip_sites)), # Ensure all character fist, if new site added and all NA can cause error without this step
+      as.character
+    )
+  )
+
 exposure_risk_qa <- bind_rows(
   lapply(ip_sites, function(ip) {
     
@@ -152,8 +160,8 @@ exposure_risk_qa
 
 # Check
 dat_clean %>%
-  filter(!is.na(exposure_risk_assessment_ip1)) %>%
-  select(record_id, contact_name ,exposure_risk_assessment_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_assessment_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
+  #filter(!is.na(exposure_risk_label_ip1)) %>%
+  select(record_id, first_name_contact_list, exposure_risk_label_ip1, exposure_risk_calculated_ip1, exposure_risk_qa_ip1, exposure_risk_label_ip2, exposure_risk_calculated_ip2, exposure_risk_qa_ip2) %>%
   view()
 
 

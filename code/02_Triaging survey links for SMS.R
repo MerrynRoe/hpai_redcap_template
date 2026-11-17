@@ -1,5 +1,5 @@
 # Version: 2.0
-# Date of last update: 19/10/2026
+# Date of last update: 18/11/2026
 
 # Merging the unique links and contact details from RedCap to input to SMS messaging system
 # For triage survey
@@ -43,7 +43,7 @@ contact_dat <- redcap %>%
 
 # Import REDCap unique survey link
 ## As per Work instructions Section 11.8 (a) update line below to reflect the name of your new import .csv ##
-link_dat <- read.csv(here::here("raw_data", "DRAFTHPAIRevisedScope151026_Participants_2026-10-19_1708.csv")) # Update with most recent version
+link_dat <- read.csv(here::here("raw_data", "HPAIExposureManagementV2_Participants_2026-11-18_0850_triage_link.csv")) # Update with most recent version
 
 
 link_dat <- link_dat %>%
