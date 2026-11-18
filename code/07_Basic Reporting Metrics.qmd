@@ -28,8 +28,8 @@ execute:
 #| message: false
 #| warning: false
 
-# Version: 1.1
-# Date of last update: 20/8/2026
+# Version: 2
+# Date of last update: 18/11/2026
 
 pacman::p_load(tidyverse,
                janitor,
@@ -94,7 +94,7 @@ showtext_auto()
 
 theme_set(theme_gv())
 
-source(here::here("code", "04_Cleaning for reporting and PHESS.R"))
+source(here::here("code", "03_Cleaning for reporting and PHESS.R"))
 
 ```
 
@@ -105,31 +105,29 @@ source(here::here("code", "04_Cleaning for reporting and PHESS.R"))
 #| warning: false
 
 # Number of IP sites
-n_ip_sites <- 1
+n_ip_sites <- length(unique(ip_sites)) # This is set in script 03
 
 # Total (unique) contacts screened
 n_total_contacts_pre_triage <- nrow(redcap)
 
 # Total contacts triaged (completed)
 n_total_contacts_responded_triage <- dat_clean %>%
-  filter(!is.na(exposure_ip1_yn) | !is.na(exposure_ip2_yn)) %>%
+  filter(
+    if_any(
+      all_of(paste0("triage_yn_", ip_sites)), # Have they responded to a onsite Q in any IP site survey
+      ~ !is.na(.x)
+    )) %>%
   nrow()
 
 # Total contacts triaged (attended)
 n_total_contacts_exposed <- dat_clean %>%
-  filter(exposure_ip1_yn == 1 | exposure_ip2_yn == 1) %>%
+  filter(
+    if_any(
+      all_of(paste0("triage_yn_", ip_sites)),
+      ~ .x == 1
+    )) %>%
   nrow()
-
 pc_total_contacts_exposed <- (n_total_contacts_exposed/n_total_contacts_responded_triage * 100)
-
-# Total contacts interviewed (3 PHO led interview forms marked as 'complete')
-n_contacts_interviewed <- dat_clean %>%
-  filter(avian_influenza_contact_demo_complete == 2 & 
-           (avian_influenza_contact_facility_ip1_risk_complete == 2 | avian_influenza_contact_facility_ip2_risk_complete == 2) &
-  avian_influenza_contact_symptoms_treatment_complete == 2) %>%
-  nrow()
-
-pc_contacts_interviewed <- (n_contacts_interviewed/n_total_contacts_exposed * 100)
 
 
 # Total high risk contacts
@@ -139,7 +137,18 @@ n_high_risk <- dat_clean %>%
 
 # Total with any symptoms
 n_symptoms_any <- dat_clean %>%
-  filter(symptoms == 1 | symptoms_yn_fu == 1) %>%
+  filter(
+    if_any(
+      all_of(unlist(lapply(ip_sites, function(ip) {
+        paste0("symptoms_", ip, "___", c(1:6, 99))
+      }))),
+      ~ .x == 1
+    ) |
+      if_any(
+        paste0("symptoms_fu___", c(1:6, 99)),
+        ~ .x == 1
+      )
+  ) %>%
   nrow()
 
 # Total in high risk period
@@ -157,7 +166,6 @@ n_high_risk_period <- dat_clean %>%
 
 * `r n_ip_sites` HPAI infected premises have been reported  
 * After deduplication, a total of `r n_total_contacts_pre_triage` contacts were provided by facilities for screening; to date `r n_total_contacts_responded_triage` have been triaged, with `r n_total_contacts_exposed` (`r round(pc_total_contacts_exposed, 2)`%) having reported attendance onsite during the period of interest  
-* `r n_contacts_interviewed` (`r round(pc_contacts_interviewed, 2)`%) of those who have reported onsite attendance during the period of interest had their interview completed  
 * `r n_high_risk` have been identified as high risk and `r n_symptoms_any` have reported symptoms  
 * `r n_high_risk_period` high risk contacts are still in their high risk period requiring follow up
 
@@ -168,33 +176,37 @@ n_high_risk_period <- dat_clean %>%
 #| message: false
 #| warning: false
 
-dat_ip <- dat_clean %>%
-  pivot_longer(
-    cols = c(exposure_ip1_yn, exposure_ip2_yn),
-    names_to = "ip_site",
-    values_to = "exposed"
-  ) %>%
-  filter(exposed == 1) %>%
-  mutate(
-    ip_site = recode(ip_site,
-                     exposure_ip1_yn = "IP1",
-                     exposure_ip2_yn = "IP2")
-  )
+dat_ip <- bind_rows(
+  lapply(ip_sites, function(ip) {
+
+    dat_clean %>%
+      filter(.data[[paste0("triage_yn_", ip)]] == 1) %>%
+      mutate(
+        ip_site = str_to_upper(ip),
+        symptoms_any = .data[[paste0("symptoms_any_", ip)]],
+        flu_vax = .data[[paste0("flu_vax_", ip)]]
+      )
+
+  })
+)
 
 summary_ip <- dat_ip %>%
   group_by(ip_site) %>%
   summarise(
 
     # Suspected cases
-    `Suspected Cases` = sum(symptoms == 1 | symptoms_yn_fu == 1, na.rm = TRUE),
+    `Suspected Cases` = sum(
+      symptoms_any == 1 | symptoms_fu_any == 1,
+      na.rm = TRUE
+    ),
 
     # Confirmed cases
     `Total Cases (confirmed)` = sum(
-      (symptoms == 1 | symptoms_yn_fu == 1) &
-      test_results %in% c(2, 3),
+      (symptoms_any == 1 | symptoms_fu_any == 1) &
+        test_results %in% c(2, 3),
       na.rm = TRUE
     ),
-    
+
     # Total contacts
     `Total Contacts` = n(),
 
@@ -204,16 +216,19 @@ summary_ip <- dat_ip %>%
       na.rm = TRUE
     ),
 
-    # Seasonal vaccination proportion from initial interview - not currently including any additional PHO facilitated vax
+    # Seasonal vaccination proportion
     `Seasonal Vax %` = round(
-    100 * sum(seasonal_vax_yn == 1, na.rm = TRUE) /
-    sum(seasonal_vax_yn %in% c(2, 1, 3), na.rm = TRUE),1), ## Need to update to 0 when coding in REDCap fixed
-    
+      100 * sum(flu_vax == 1, na.rm = TRUE) / n(),
+      1
+    ),
     # Final contact at risk date
-    `Final contact at risk date` = max(last_exposure_date_all, na.rm = TRUE)
+    `Final contact at risk date` = max(
+      last_exposure_date_all,
+      na.rm = TRUE
+    ),
 
-  ) %>%
-  ungroup()
+    .groups = "drop"
+  )
 
 summary_ip %>%
   gt()
