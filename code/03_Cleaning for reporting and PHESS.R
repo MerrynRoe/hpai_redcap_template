@@ -105,6 +105,35 @@ dat_clean %>%
   select(record_id, first_name_contact_list, contains("exposure_risk_calculated_ip"), exposure_risk_calculated_all) %>%
   view()
 
+## Consolidate symptom var
+# Create binary any symptoms variables
+
+for (ip in ip_sites) {
+  
+  symptom_cols <- paste0("symptoms_", ip, "___", c(1:6, 99))
+  none_col <- paste0("symptoms_", ip, "___98")
+  
+  dat_clean[[paste0("symptoms_any_", ip)]] <- case_when(
+    
+    dat_clean[[none_col]] == 1 ~ 0,
+    
+    rowSums(dat_clean[, symptom_cols, drop = FALSE] == 1, na.rm = TRUE) > 0 ~ 1,
+    
+    TRUE ~ NA_real_
+  )
+}
+
+# Follow-up symptoms
+dat_clean <- dat_clean %>%
+  mutate(
+    symptoms_fu_any = case_when(
+      symptoms_fu___98 == 1 ~ 0,
+      rowSums(across(all_of(paste0("symptoms_fu___", c(1:6, 99))) ) == 1, na.rm = TRUE) > 0 ~ 1,
+      TRUE ~ NA_real_
+    )
+  )
+  
+
 
 # Create a QA list of REDCap ID where exposure_risk_label_ip1 =! exposure_risk_calculated_ip1 for each IP 
 # Use this to check the REDCap calculation matches the R calculation
