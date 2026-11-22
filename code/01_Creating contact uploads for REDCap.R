@@ -57,12 +57,14 @@ if (is.null(redcap) || nrow(as.data.frame(redcap)) == 0) {
 }
 
 redcap <- redcap %>%
-  # New project structure has following name and phone variables
-  # first_name_contact_list, first_name_ip1, first_name_ipx
-  # phone_contact_list
-  # triage_yn_ip1, triage_yn_ipx
-  # TODO: need to add a step where we fill with the latest non-missing name = first_name and add QA if names don't match between IP sites
-  select(record_id, starts_with("first_name"), phone_contact_list, triage_yn_ip1)
+  select(
+    any_of(c(
+      "record_id",
+      "phone_contact_list",
+      "triage_yn_ip1"
+    )),
+    starts_with("first_name")
+  )
 
 # Collect the maximum Record ID to assign new Record IDs for new contacts
 max_id <- if (length(redcap$record_id) == 0 || all(is.na(redcap$record_id))) {
@@ -85,17 +87,47 @@ dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
   mutate(contact_name = str_to_lower(first_name)) %>% # Create a name to use on the SMS's 'contact name'
   select(contact_name, phone_formatted, email)
 
+# Ensure columns exist, even when REDCap is empty
+required_vars <- c(
+  "phone_contact_list",
+  "first_name_contact_list",
+  "record_id",
+  "triage_yn_ip1"
+)
+
+for (var in required_vars) {
+  if (!var %in% names(redcap)) {
+    redcap[[var]] <- NA_character_
+  }
+}
+
 redcap <- redcap %>%
   mutate(
-    phone_formatted = phone_contact_list %>% # Pulling phone numbers already in REDCap and checking formatting matches for deduplication
+    phone_formatted = phone_contact_list %>%
       str_remove_all("[^0-9]") %>%
-      str_replace("^0", "") %>%
+      str_remove("^0") %>%
       str_replace("^61", "61") %>%
-      { ifelse(str_starts(., "4"), paste0("61", .), .) } %>%
-      as.character(), 
-    contact_name = str_to_lower(first_name_contact_list) %>% as.character()
+      {
+        ifelse(
+          str_starts(., "4"),
+          paste0("61", .),
+          .
+        )
+      } %>%
+      as.character(),
+    
+    contact_name = first_name_contact_list %>%
+      str_to_lower() %>%
+      as.character()
   ) %>%
-  select(contact_name, phone_formatted, record_id, triage_yn_ip1)
+  select(
+    any_of(c(
+      "contact_name",
+      "phone_formatted",
+      "record_id",
+      "triage_yn_ip1"
+    ))
+  )
 
 dat_contacts_facility_ip1 <- dat_contacts_facility_ip1 %>%
   left_join(redcap,
