@@ -6,5 +6,6 @@
 - **code/**: Code folder.
 - **redcap_templates/**: Folder for REDCap templates.
 - **docs/**: Folder containing work instructions for REDCap use and setup. **<-- Start here!!**
+  - **CODEOWNERS**: File that names owners of the main template on GitHub. 
 - **.gitignore**: GitIgnore file, dictates what is and is not tracked on Git.
 - **hpai_redcap_template.Rproj**: R Project file.
